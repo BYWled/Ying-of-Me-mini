@@ -1,0 +1,64 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": { "navigationBarTitleText": "首页", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/hub/index",
+      "style": { "navigationBarTitleText": "专题" }
+    },
+    {
+      "path": "pages/category/index",
+      "style": { "navigationBarTitleText": "探索" }
+    },
+    {
+      "path": "pages/about/index",
+      "style": { "navigationBarTitleText": "关于", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/article/detail",
+      "style": {
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#f0f2f5"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#42b983",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "text": "首页",
+        "pagePath": "pages/index/index",
+        "iconPath": "static/tabs/home.png",
+        "selectedIconPath": "static/tabs/home-active.png"
+      },
+      {
+        "pagePath": "pages/hub/index",
+        "text": "专题",
+        "iconPath": "static/tabs/hub.png",
+        "selectedIconPath": "static/tabs/hub-active.png"
+      },
+      {
+        "text": "探索",
+        "pagePath": "pages/category/index",
+        "iconPath": "static/tabs/category.png",
+        "selectedIconPath": "static/tabs/category-active.png"
+      },
+      {
+        "text": "关于",
+        "pagePath": "pages/about/index",
+        "iconPath": "static/tabs/about.png",
+        "selectedIconPath": "static/tabs/about-active.png"
+      }
+    ]
+  }
+}
