@@ -34,6 +34,14 @@ export default defineConfig({
           glass: "rgba(255, 255, 255, 0.6)", // 预设毛玻璃背景色
         },
       },
-    })
+    }),
   ],
+  server: {
+    proxy: {
+      "/api": {
+        target: "https://www.wled.top", // 后端 API 地址
+        changeOrigin: true,
+      },
+    },
+  },
 });
