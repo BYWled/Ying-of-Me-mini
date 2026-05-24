@@ -16,7 +16,7 @@
       <view class="flex items-center justify-between w-full overflow-visible">
         <!-- 页面标题，滚动后才淡入显示 -->
         <text class="text-[34rpx] font-bold transition-all duration-500" :class="[
-          isScrolled ? 'opacity-100' : 'opacity-0 translate-y-[-10rpx]',
+          isScrolled ? 'opacity-100' : 'opacity-0 translate-y-[-20rpx]',
           isDark ? 'text-white' : 'text-gray-800'
         ]">
           {{ siteInfo?.title || '伴莺的小窝' }}
@@ -24,7 +24,7 @@
 
         <!-- 主题切换精致按钮 (跟随首屏滚动动态平移动画，非 scrolled 时隐藏半边身位) -->
         <view
-          class="w-[72rpx] h-[72rpx] rounded-full flex items-center justify-center active:scale-90 transition-all duration-500 ease-out cursor-pointer"
+          class="w-[72rpx] h-[72rpx] rounded-full flex items-center justify-center active:scale-90 transition-all duration-500 ease-out cursor-pointer translate-y-3"
           :class="[
             isScrolled
               ? (isDark ? 'bg-white/10 translate-x-0' : 'bg-black/5 translate-x-0')
@@ -65,7 +65,7 @@
 
       <!-- 4.1 悬浮个人信息玻璃卡片 (网页版左边栏精粹) -->
       <view
-        class="w-full rounded-[40rpx] p-[40rpx] box-border shadow-xl border backdrop-blur-xl transition-all duration-500 mb-8"
+        class="w-full rounded-[40rpx] p-[30rpx] box-border shadow-xl border backdrop-blur-xl transition-all duration-500 mb-8"
         :class="isDark ? 'bg-black/40 border-white/10 shadow-black/40' : 'bg-white/65 border-white/60 shadow-gray-200/50'">
         <view class="flex items-center">
           <!-- 头像 -->
@@ -86,7 +86,7 @@
         </view>
 
         <!-- 站点快速统计项 (采用高精细本地矢量图标代替 SVG 和 Emoji) -->
-        <view class="grid grid-cols-3 gap-2 mt-6 pt-5 border-t"
+        <view class="grid grid-cols-3 pt-5 border-t"
           :class="isDark ? 'border-white/10' : 'border-gray-200/50'">
           <view class="flex flex-col items-center">
             <!-- 统计文章图标 -->
@@ -191,7 +191,7 @@
         </view>
         <text v-else-if="currentPage >= totalPage" class="text-[22rpx]"
           :class="isDark ? 'text-gray-500' : 'text-gray-400'">
-          岛屿已加载完毕 · 伴莺的小窝 @ wled.top
+          文章已加载完毕 · 伴莺的小窝 @ wled.top
         </text>
         <text v-else class="text-[22rpx]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
           上拉探索更多篇章
@@ -265,8 +265,8 @@ const scrollToContent = () => {
     const rect = Array.isArray(data) ? data[0] : data;
     if (rect && typeof rect.top === 'number') {
       uni.pageScrollTo({
-        scrollTop: scrollTop.value + rect.top - navBarHeight.value,
-        duration: 400
+        scrollTop: scrollTop.value + rect.top - navBarHeight.value - statusBarHeight.value - 20, // 额外留白20rpx
+        duration: 500
       });
     }
   }).exec();
