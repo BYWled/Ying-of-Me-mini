@@ -86,8 +86,7 @@
         </view>
 
         <!-- 站点快速统计项 (采用高精细本地矢量图标代替 SVG 和 Emoji) -->
-        <view class="grid grid-cols-3 pt-5 border-t"
-          :class="isDark ? 'border-white/10' : 'border-gray-200/50'">
+        <view class="grid grid-cols-3 pt-5 border-t" :class="isDark ? 'border-white/10' : 'border-gray-200/50'">
           <view class="flex flex-col items-center">
             <!-- 统计文章图标 -->
             <image class="w-[38rpx] h-[38rpx] mb-1.5" src="/static/home/posts.png" mode="aspectFit" />
@@ -244,7 +243,7 @@ const resolveMediaUrl = (path: string | null | undefined) => {
 };
 
 const resolvedAvatar = computed(() => {
-  return resolveMediaUrl(siteInfo.value?.theme_config?.defaults?.avatar || '/images/avatar.jpg');
+  return resolveMediaUrl(siteInfo.value?.theme_config?.defaults?.avatar || '/images/Oz-Vessalius-avatar.svg');
 });
 
 // 格式化日期格式

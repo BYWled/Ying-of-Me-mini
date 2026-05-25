@@ -6,11 +6,11 @@
     },
     {
       "path": "pages/hub/index",
-      "style": { "navigationBarTitleText": "专题" }
+      "style": { "navigationBarTitleText": "专题", "navigationStyle": "custom" }
     },
     {
       "path": "pages/category/index",
-      "style": { "navigationBarTitleText": "探索" }
+      "style": { "navigationBarTitleText": "探索", "navigationStyle": "custom" }
     },
     {
       "path": "pages/about/index",
@@ -19,8 +19,8 @@
     {
       "path": "pages/article/detail",
       "style": {
-        "navigationBarTitleText": "",
-        "navigationBarBackgroundColor": "#ffffff"
+        "navigationBarTitleText": "文章详情",
+        "navigationStyle": "custom"
       }
     }
   ],

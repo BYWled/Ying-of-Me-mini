@@ -75,6 +75,7 @@ export interface ArticleDetail {
   path: string;
   excerpt: string;
   content: string; // WXML/mp-html 渲染所需的核心 HTML 字符串
+  cover?: string | null; // 【新增】修复封面属性报错
   more: string;
   categories: TaxonomyMeta[];
   tags: TaxonomyMeta[];

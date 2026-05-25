@@ -1,5 +1,442 @@
 <template>
-    <view>
-        文章详情
+    <view
+        :class="['relative min-h-screen pb-[120rpx] transition-colors duration-500 overflow-x-hidden max-w-[100vw]', isDark ? 'bg-[#121212]' : 'bg-[#f0f2f5]']">
+
+        <!-- 顶部浮顶 Header (吸顶 + 进度条) -->
+        <view class="fixed top-0 left-0 w-full z-50 pointer-events-none"
+            :style="{ paddingTop: statusBarHeight + 'px' }">
+
+            <view class="absolute inset-0 transition-opacity duration-300"
+                :class="isScrolled ? (isDark ? 'bg-[#1e1e1e]/95 backdrop-blur-md shadow-md opacity-100' : 'bg-white/95 backdrop-blur-md shadow-sm opacity-100') : 'opacity-0'">
+            </view>
+
+            <view class="relative h-[44px] flex items-center px-[32rpx] max-w-[80vw] pointer-events-auto box-border w-full">
+                <view
+                    class="p-[12rpx] -ml-[12rpx] active:scale-90 transition-all duration-300 rounded-full flex items-center justify-center"
+                    :class="!isScrolled ? 'bg-black/30 backdrop-blur-sm' : ''" @click="goBack">
+                    <image src="/static/article/back.png" class="w-[36rpx] h-[36rpx] transition-all duration-300"
+                        :class="[!isScrolled || isDark ? 'invert opacity-90' : 'opacity-70']" mode="aspectFit" />
+                </view>
+                <text
+                    class="text-[30rpx] font-bold ml-[20rpx] flex-1 mb-[8rpx] truncate transition-opacity duration-300"
+                    :class="[isDark ? 'text-gray-200' : 'text-gray-800', isScrolled ? 'opacity-100' : 'opacity-0']">
+                    {{ article?.title || '加载中...' }}
+                </text>
+            </view>
+
+            <view class="absolute bottom-0 left-0 h-[4rpx] bg-[#42b983] transition-all duration-300 ease-out"
+                :class="isScrolled ? 'opacity-100' : 'opacity-0'" :style="{ width: readProgress + '%' }"></view>
+        </view>
+
+        <!-- 加载骨架屏 -->
+        <view v-if="isLoading" class="w-full h-screen flex flex-col pt-[30vh] items-center box-border">
+            <view
+                class="w-[80rpx] h-[80rpx] border-4 border-[#42b983] border-t-transparent rounded-full animate-spin mb-4">
+            </view>
+            <text class="text-[26rpx]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">正在从时间裂缝中抽取文章...</text>
+        </view>
+
+        <!-- 正式内容区 -->
+        <block v-else-if="article">
+            <image class="absolute top-0 left-0 w-full h-[45vh] object-cover z-0" :src="coverUrl" mode="aspectFill" />
+            <view class="absolute top-0 left-0 w-full h-[45vh] z-0"
+                :class="isDark ? 'bg-gradient-to-b from-black/40 via-black/60 to-[#121212]' : 'bg-gradient-to-b from-black/20 via-black/10 to-[#f0f2f5]'">
+            </view>
+
+            <!-- 修复点 2：使用 mx-[32rpx] (外边距) 代替 w-full + px，完美规避盒模型导致的总宽度溢出 -->
+            <view class="article-container relative z-10 pt-[28vh] pb-[40rpx]">
+
+                <!-- 文章标题与元数据卡片 -->
+                <view
+                    class="backdrop-blur-xl rounded-[32rpx] m-[32rpx] p-[40rpx] shadow-sm transition-colors duration-500 box-border"
+                    :class="isDark ? 'bg-[#1e1e1e]/85 border border-[#333]' : 'bg-white/85 border border-white/60'">
+                    <text class="text-[44rpx] font-bold leading-snug block mb-[24rpx]"
+                        :class="isDark ? 'text-gray-100' : 'text-gray-800'">
+                        {{ article.title }}
+                    </text>
+
+                    <view class="flex items-center flex-wrap gap-y-[16rpx]">
+                        <view class="flex items-center mr-[32rpx]">
+                            <image src="/static/home/calendar.png" class="w-[28rpx] h-[28rpx] mr-[12rpx] opacity-60"
+                                :class="isDark ? 'invert' : ''" mode="aspectFit" />
+                            <text class="text-[24rpx] font-medium"
+                                :class="isDark ? 'text-gray-400' : 'text-gray-500'">{{ formatDate(article.date)
+                                }}</text>
+                        </view>
+                        <view v-if="article.categories && article.categories.length"
+                            class="flex items-center mr-[24rpx]">
+                            <view class="px-[16rpx] py-[4rpx] rounded-full border border-[#42b983]/30"
+                                :class="isDark ? 'bg-[#42b983]/20' : 'bg-[#42b983]/10'">
+                                <text class="text-[22rpx] line-clamp-1 text-[#42b983] font-bold">{{
+                                    article.categories[0].name
+                                    }}</text>
+                            </view>
+                        </view>
+                        <view class="flex items-center gap-[12rpx]">
+                            <view v-for="(tag, index) in article.tags" :key="index"
+                                class="px-[12rpx] py-[2rpx] rounded-[8rpx]"
+                                :class="isDark ? 'bg-[#2a2a2a]' : 'bg-gray-100'">
+                                <text class="text-[22rpx] line-clamp-1"
+                                    :class="isDark ? 'text-gray-400' : 'text-gray-400'"># {{ tag.name }}</text>
+                            </view>
+                        </view>
+                    </view>
+                </view>
+
+                <!-- 富文本正文卡片 (同样确保内部元素不会横向溢出) -->
+                <view
+                    class="rounded-[32rpx] p-[32rpx] shadow-sm transition-colors duration-500 overflow-hidden box-border w-full"
+                    :class="isDark ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white/95 border border-white/60'">
+                    <mp-html ref="articleHtml" :key="isDark ? 'dark' : 'light'" :content="processedContent"
+                        :tag-style="isDark ? markdownStylesDark : markdownStyles" domain="https://www.wled.top"
+                        :selectable="true" :lazy-load="true" :use-anchor="navBarHeight" @linktap="handleLinkTap"
+                        @ready="handleHtmlReady" />
+                </view>
+            </view>
+
+            <!-- 悬浮操作按钮组 (右下角工具箱) -->
+            <view class="fixed bottom-[60rpx] right-[40rpx] flex flex-col gap-[24rpx] z-40">
+                <view class="tool-btn" :class="isDark ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white/90 border-gray-100'"
+                    @click="toggleTheme">
+                    <image :src="isDark ? '/static/article/theme-dark.png' : '/static/article/theme-light.png'"
+                        class="w-[40rpx] h-[40rpx] opacity-80" mode="aspectFit" />
+                </view>
+                <view class="tool-btn" :class="isDark ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white/90 border-gray-100'"
+                    @click="showToc = true" v-if="tocList.length > 0">
+                    <image src="/static/article/toc.png" class="w-[40rpx] h-[40rpx] opacity-80"
+                        :class="isDark ? 'invert' : ''" mode="aspectFit" />
+                </view>
+                <view class="tool-btn" :class="isDark ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white/90 border-gray-100'"
+                    @click="scrollToTop">
+                    <image src="/static/article/top.png" class="w-[40rpx] h-[40rpx] opacity-80"
+                        :class="isDark ? 'invert' : ''" mode="aspectFit" />
+                </view>
+            </view>
+
+            <!-- 文章目录 (TOC) 抽屉 -->
+            <view class="fixed inset-0 z-50 transition-all duration-300"
+                :class="showToc ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'">
+                <view class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="showToc = false"></view>
+                <view
+                    class="absolute bottom-0 left-0 w-full rounded-t-[40rpx] p-[40rpx] flex flex-col transition-transform duration-300 box-border"
+                    :class="[showToc ? 'translate-y-0' : 'translate-y-full', isDark ? 'bg-[#1e1e1e]' : 'bg-white']"
+                    style="max-height: 75vh;">
+                    <view class="flex justify-between items-center mb-[24rpx]">
+                        <text class="text-[36rpx] font-bold"
+                            :class="isDark ? 'text-gray-100' : 'text-gray-800'">文章大纲</text>
+                        <view class="p-[10rpx] active:opacity-50" @click="showToc = false">
+                            <text class="text-[28rpx] text-[#42b983]">关闭</text>
+                        </view>
+                    </view>
+                    <scroll-view scroll-y="true" style="height: 55vh;" class="w-full">
+                        <view v-for="(item, index) in tocList" :key="index"
+                            class="py-[24rpx] border-b active:opacity-50 transition-opacity"
+                            :class="isDark ? 'border-[#333]' : 'border-gray-100'"
+                            :style="{ paddingLeft: `${(item.level - 1) * 32}rpx` }" @click="jumpToAnchor(item.id)">
+                            <text class="text-[28rpx] line-clamp-1"
+                                :class="isDark ? 'text-gray-300' : 'text-gray-600'">{{ item.text }}</text>
+                        </view>
+                        <view class="h-[40rpx]"></view>
+                    </scroll-view>
+                </view>
+            </view>
+        </block>
     </view>
 </template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { onLoad, onPageScroll } from '@dcloudio/uni-app'
+import mpHtml from 'mp-html/dist/uni-app/components/mp-html/mp-html.vue'
+import { blogApi } from '@/api/posts'
+import type { ArticleDetail } from '@/api/types'
+
+// --- 状态与环境变量 ---
+const article = ref<ArticleDetail | null>(null)
+const isLoading = ref(true)
+const isDark = ref(false)
+const showToc = ref(false)
+const tocList = ref<{ level: number, id: string, text: string }[]>([])
+const processedContent = ref('')
+
+const scrollTop = ref(0)
+const readProgress = ref(0)
+const contentHeight = ref(0)
+
+const systemInfo = uni.getSystemInfoSync()
+const statusBarHeight = ref(systemInfo.statusBarHeight || 20)
+const navBarHeight = computed(() => statusBarHeight.value + 44)
+const isScrolled = computed(() => scrollTop.value > 250)
+const articleHtml = ref()
+
+const sanitizeId = (id: string) => {
+    let decoded = id;
+    try { decoded = decodeURIComponent(id); } catch (e) { }
+    return decoded.replace(/[^a-zA-Z0-9\-_]/g, '_');
+}
+
+// 提取代码高亮的核心 CSS，保证代码染色有效
+const getHighlightCss = (isDark: boolean) => `
+<style>
+  figure.highlight { display: none; } 
+  .keyword, .built_in, .type, .literal, .meta { color: ${isDark ? '#c678dd' : '#d73a49'}; font-weight: bold; }
+  .string, .symbol, .bullet, .addition { color: ${isDark ? '#98c379' : '#032f62'}; }
+  .title, .section, .name, .function { color: ${isDark ? '#61afef' : '#6f42c1'}; font-weight: bold; }
+  .comment, .quote { color: ${isDark ? '#5c6370' : '#6a737d'}; font-style: italic; }
+  .number { color: ${isDark ? '#d19a66' : '#005cc5'}; }
+  .attribute, .attr, .variable, .template-variable { color: ${isDark ? '#e5c07b' : '#22863a'}; }
+</style>
+`;
+
+// 获取对应的颜色主题配置
+const getThemeColors = (cls: string, isDark: boolean) => {
+    if (cls.includes('blue') || cls.includes('info')) return { hex: '#409eff', rgb: '64,158,255', text: '#409eff' };
+    if (cls.includes('red') || cls.includes('danger') || cls.includes('error')) return { hex: '#f56c6c', rgb: '245,108,108', text: '#f56c6c' };
+    if (cls.includes('yellow') || cls.includes('warning')) return { hex: '#e6a23c', rgb: '230,162,60', text: '#e6a23c' };
+    if (cls.includes('green') || cls.includes('success')) return { hex: '#67c23a', rgb: '103,194,58', text: '#67c23a' };
+    return { hex: '#42b983', rgb: '66,185,131', text: isDark ? '#42b983' : '#42b983' }; // 默认薄荷绿
+}
+
+// --- 修复点 1：终极内联样式注入引擎，100% 保证样式无法被丢弃 ---
+const processHexoContent = (html: string, isDark: boolean) => {
+    if (!html) return '';
+    let res = html;
+
+    // 1. 净化 ID (彻底保障 Anchor 跳转无报错)
+    res = res.replace(/<h([1-6])([^>]*)id="([^"]+)"/ig, (match, level, attrs, id) => {
+        return `<h${level}${attrs}id="anchor-${sanitizeId(id)}"`;
+    });
+
+    // 2. 深度脱壳：解构 Tabs，内联化
+    const tabMap: Record<string, string> = {};
+    res = res.replace(/<button[^>]*data-tab="([^"]+)"[^>]*>([\s\S]*?)<\/button>/ig, (match, tabId, tabName) => {
+        tabMap[tabId] = tabName.replace(/<[^>]+>/g, '').trim();
+        return '';
+    });
+    res = res.replace(/<div([^>]*)class="([^"]*tab-pane[^"]*)"([^>]*)>/ig, (match, p1, p2, p3) => {
+        let idMatch = match.match(/id="([^"]+)"/i);
+        let id = idMatch ? idMatch[1] : null;
+        let cleanTag = match.replace(/\bhidden(?:="[^"]*")?\b/gi, '');
+
+        // 内联生成的精美 Tab 标题
+        let titleStyle = `font-size: 30rpx; font-weight: bold; color: ${isDark ? '#e5e7eb' : '#374151'}; margin: 40rpx 0 16rpx 0; padding-bottom: 12rpx; border-bottom: 2rpx solid rgba(66,185,131,${isDark ? '0.1' : '0.2'}); display: flex; align-items: center;`;
+        let indicatorStyle = `width: 8rpx; height: 28rpx; background: #42b983; border-radius: 4rpx; margin-right: 16rpx; display: inline-block;`;
+
+        let title = (id && tabMap[id]) ? `<div style="${titleStyle}"><span style="${indicatorStyle}"></span>${tabMap[id]}</div>` : '';
+        return cleanTag + title;
+    });
+
+    // 3. 深度脱壳：折叠块 (Details/Summary) 的强力合并替换
+    res = res.replace(/<details([^>]*)>(\s*)<summary[^>]*>([\s\S]*?)<\/summary>/ig, (m, attrs, space, summaryContent) => {
+        let clsMatch = attrs.match(/class="([^"]*)"/i);
+        let theme = getThemeColors(clsMatch ? clsMatch[1] : '', isDark);
+        let cleanAttrs = attrs.replace(/class="[^"]*"/i, '');
+        let cleanSummary = summaryContent.replace(/<i[^>]*>.*?<\/i>/ig, '').trim();
+
+        // 生成极致内联样式，绝对无法被覆盖
+        let detailsStyle = `border-radius: 16rpx; margin: 32rpx 0; overflow: hidden; display: block; border: 1px solid rgba(${theme.rgb},${isDark ? '0.15' : '0.2'}); background: rgba(${theme.rgb},${isDark ? '0.05' : '0.02'});`;
+        let summaryStyle = `font-weight: 700; color: ${theme.text}; padding: 24rpx; display: block; cursor: pointer; background: rgba(${theme.rgb},${isDark ? '0.1' : '0.08'}); border-bottom: 1px solid rgba(${theme.rgb}, 0.1); font-size: 30rpx;`;
+
+        return `<details style="${detailsStyle}" ${cleanAttrs}>${space}<summary style="${summaryStyle}">${cleanSummary}</summary>`;
+    });
+
+    // 4. 深度脱壳：提示块 (Note/Hint)
+    res = res.replace(/<div([^>]*)class="([^"]*)(note|tip|info|warning|danger|error|success|blue|red|yellow|green)([^"]*)"([^>]*)>/ig, (m, p1, c1, type, c2, p5) => {
+        let theme = getThemeColors(c1 + type + c2, isDark);
+        let hintStyle = `padding: 24rpx 32rpx; margin: 32rpx 0; border-radius: 12rpx; border-left: 8rpx solid ${theme.hex}; background: rgba(${theme.rgb},${isDark ? '0.08' : '0.05'}); display: block; font-size: 28rpx; color: ${isDark ? '#e5e7eb' : '#374151'};`;
+        return `<div${p1} style="${hintStyle}"${p5}>`;
+    });
+
+    // 5. 解构代码块 (完美包裹滚动区，确保 max-width 封死)
+    res = res.replace(/<figure[^>]*class="[^"]*highlight[^"]*"[^>]*>([\s\S]*?)<\/figure>/ig, (match, innerHtml) => {
+        let newInner = innerHtml.replace(/<td[^>]*class="[^"]*gutter[^"]*"[^>]*>[\s\S]*?<\/td>/ig, '');
+        newInner = newInner.replace(/<td[^>]*class="[^"]*code[^"]*"[^>]*>/ig, '<td style="padding: 24rpx; border: none; width: 100%; box-sizing: border-box;">');
+        newInner = newInner.replace(/<table[^>]*>/ig, '<table style="width: 100%; min-width: 100%; border-collapse: collapse; border: none; margin: 0; box-sizing: border-box;">');
+
+        let blockStyle = `overflow-x: auto; max-width: 100%; margin: 32rpx 0; border-radius: 16rpx; background-color: ${isDark ? '#282c34' : '#f6f8fa'}; color: ${isDark ? '#abb2bf' : '#24292e'}; box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06); -webkit-overflow-scrolling: touch; box-sizing: border-box;`;
+        return `<div style="${blockStyle}">${newInner}</div>`;
+    });
+
+    return res;
+}
+
+// --- 基础排版映射表 ---
+const markdownStyles = {
+    h1: 'font-size: 42rpx; font-weight: 800; margin: 50rpx 0 24rpx 0; color: #1f2937;',
+    h2: 'font-size: 38rpx; font-weight: 700; margin: 48rpx 0 24rpx 0; color: #1f2937; padding-bottom: 16rpx; border-bottom: 1px solid #f3f4f6;',
+    h3: 'font-size: 34rpx; font-weight: 700; margin: 36rpx 0 20rpx 0; color: #374151;',
+    p: 'font-size: 30rpx; line-height: 1.8; color: #4b5563; margin-bottom: 32rpx; word-wrap: break-word;',
+    blockquote: 'border-left: 8rpx solid #42b983; padding: 24rpx 32rpx; color: #6b7280; background-color: rgba(66, 185, 131, 0.05); border-radius: 8rpx; margin: 32rpx 0; font-size: 28rpx;',
+    ul: 'padding-left: 40rpx; margin-bottom: 32rpx; color: #4b5563; font-size: 30rpx; line-height: 1.8;',
+    ol: 'padding-left: 40rpx; margin-bottom: 32rpx; color: #4b5563; font-size: 30rpx; line-height: 1.8;',
+    li: 'margin-bottom: 12rpx;',
+    code: 'background-color: #f3f4f6; padding: 4rpx 12rpx; border-radius: 6rpx; color: #e96900; font-family: Consolas, Monaco, monospace; font-size: 26rpx; word-break: break-all;',
+    a: 'color: #42b983; text-decoration: none; border-bottom: 1px dashed rgba(66, 185, 131, 0.5); padding-bottom: 2rpx;',
+    img: 'max-width: 100%; border-radius: 16rpx; margin: 16rpx 0; box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08); display: block;',
+    table: 'width: 100%; overflow-x: auto; display: block; border-collapse: collapse; margin: 32rpx 0; white-space: nowrap;',
+    th: 'border: 1px solid #e5e7eb; padding: 16rpx 24rpx; background-color: #f9fafb; font-weight: 600; color: #374151;',
+    td: 'border: 1px solid #e5e7eb; padding: 16rpx 24rpx; color: #4b5563;'
+}
+
+const markdownStylesDark = {
+    h1: 'font-size: 42rpx; font-weight: 800; margin: 50rpx 0 24rpx 0; color: #f3f4f6;',
+    h2: 'font-size: 38rpx; font-weight: 700; margin: 48rpx 0 24rpx 0; color: #f3f4f6; padding-bottom: 16rpx; border-bottom: 1px solid #333;',
+    h3: 'font-size: 34rpx; font-weight: 700; margin: 36rpx 0 20rpx 0; color: #e5e7eb;',
+    p: 'font-size: 30rpx; line-height: 1.8; color: #9ca3af; margin-bottom: 32rpx; word-wrap: break-word;',
+    blockquote: 'border-left: 8rpx solid #42b983; padding: 24rpx 32rpx; color: #9ca3af; background-color: rgba(66, 185, 131, 0.1); border-radius: 8rpx; margin: 32rpx 0; font-size: 28rpx;',
+    ul: 'padding-left: 40rpx; margin-bottom: 32rpx; color: #9ca3af; font-size: 30rpx; line-height: 1.8;',
+    ol: 'padding-left: 40rpx; margin-bottom: 32rpx; color: #9ca3af; font-size: 30rpx; line-height: 1.8;',
+    li: 'margin-bottom: 12rpx;',
+    code: 'background-color: #2a2a2a; padding: 4rpx 12rpx; border-radius: 6rpx; color: #f59e0b; font-family: Consolas, Monaco, monospace; font-size: 26rpx; word-break: break-all;',
+    a: 'color: #42b983; text-decoration: none; border-bottom: 1px dashed rgba(66, 185, 131, 0.5); padding-bottom: 2rpx;',
+    img: 'max-width: 100%; border-radius: 16rpx; margin: 16rpx 0; opacity: 0.9; display: block;',
+    table: 'width: 100%; overflow-x: auto; display: block; border-collapse: collapse; margin: 32rpx 0; white-space: nowrap;',
+    th: 'border: 1px solid #333; padding: 16rpx 24rpx; background-color: #2a2a2a; font-weight: 600; color: #e5e7eb;',
+    td: 'border: 1px solid #333; padding: 16rpx 24rpx; color: #9ca3af;'
+}
+
+// --- 逻辑与生命周期 ---
+onLoad(async (options) => {
+    const slug = options?.slug
+    if (!slug) {
+        isLoading.value = false
+        return
+    }
+    try {
+        const res = await blogApi.getArticleDetail(slug)
+        article.value = res
+        // 初始化时，使用当前主题处理数据并附加上高亮引擎的 CSS
+        const cleanContent = processHexoContent(res.content, isDark.value)
+        processedContent.value = getHighlightCss(isDark.value) + cleanContent
+        extractTOC(cleanContent)
+    } catch (error) {
+        console.error('获取文章详情失败:', error)
+    } finally {
+        isLoading.value = false
+    }
+})
+
+// 监听滚动事件，计算阅读进度条
+onPageScroll((e) => {
+    scrollTop.value = e.scrollTop
+    if (contentHeight.value > 0) {
+        const maxScroll = contentHeight.value - systemInfo.windowHeight
+        if (maxScroll > 0) {
+            let progress = (e.scrollTop / maxScroll) * 100
+            readProgress.value = Math.min(Math.max(progress, 0), 100)
+        }
+    }
+})
+
+const handleHtmlReady = () => {
+    uni.createSelectorQuery().select('.article-container').boundingClientRect((rect: any) => {
+        if (rect) {
+            const data = Array.isArray(rect) ? rect[0] : rect
+            contentHeight.value = data?.height || 0
+        }
+    }).exec()
+}
+
+// --- 工具函数与交互逻辑 ---
+const coverUrl = computed(() => {
+    if (article.value?.cover) {
+        const cv = article.value.cover
+        return cv.startsWith('http') ? cv : `https://www.wled.top${cv}`
+    }
+    return 'https://www.wled.top/images/wallhaven-wqery6-light.webp'
+})
+
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return ''
+    const d = new Date(dateStr)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const toggleTheme = () => {
+    isDark.value = !isDark.value
+    if (article.value) {
+        // 核心修复：切换主题时重新执行深层正则注入，硬更新每一块的内联颜色！
+        const cleanContent = processHexoContent(article.value.content, isDark.value)
+        processedContent.value = getHighlightCss(isDark.value) + cleanContent
+    }
+}
+
+const scrollToTop = () => uni.pageScrollTo({ scrollTop: 0, duration: 300 })
+
+const goBack = () => {
+    const pages = getCurrentPages()
+    if (pages.length === 1) {
+        uni.switchTab({ url: '/pages/index/index' })
+    } else {
+        uni.navigateBack()
+    }
+}
+
+const extractTOC = (html: string) => {
+    const regex = /<h([1-6])[^>]*id="([^"]+)"[^>]*>(.*?)<\/h\1>/g
+    let match
+    const list = []
+    while ((match = regex.exec(html)) !== null) {
+        const text = match[3].replace(/<[^>]+>/g, '').trim()
+        list.push({ level: parseInt(match[1], 10), id: match[2], text })
+    }
+    tocList.value = list
+}
+
+const jumpToAnchor = (id: string) => {
+    showToc.value = false
+    if (articleHtml.value) {
+        articleHtml.value.navigateTo(id, -navBarHeight.value - 12) // 20 是额外的安全偏移，确保标题不会被导航栏遮挡
+    }
+}
+
+const handleLinkTap = (e: any) => {
+    const href = e.href
+    if (!href) return
+
+    if (href.startsWith('#')) {
+        let rawId = href.substring(1)
+        if (rawId.startsWith('anchor-')) {
+            rawId = rawId.substring(7)
+        }
+        let safeId = 'anchor-' + sanitizeId(rawId)
+        jumpToAnchor(safeId)
+    } else if (href.startsWith('http')) {
+        uni.setClipboardData({
+            data: href,
+            success: () => uni.showToast({ title: '外链已复制到剪贴板', icon: 'none' })
+        })
+    } else {
+        const parts = href.split('/').filter(Boolean)
+        const slug = parts[parts.length - 1]
+        if (slug) {
+            uni.navigateTo({ url: `/pages/article/detail?slug=${slug}` })
+        }
+    }
+}
+</script>
+
+<style scoped>
+::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.tool-btn {
+    width: 88rpx;
+    height: 88rpx;
+    border-radius: 50%;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+    border-width: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.tool-btn:active {
+    transform: scale(0.9);
+}
+</style>
