@@ -5,13 +5,14 @@
     <!-- 1. 全屏静止背景 (解决背景填充不全问题，利用 fixed 保证滚动时完全拉伸遮罩) -->
     <view class="fixed inset-0 w-full h-full z-0 overflow-hidden pointer-events-none">
       <image class="w-full h-full object-cover transition-all duration-700" :src="heroBgUrl" mode="aspectFill" />
-      <!-- 视差暗光遮罩 -->
-      <view class="absolute inset-0 transition-all duration-500" :class="isDark ? 'bg-black/45' : 'bg-black/15'" />
+      <!-- 视差暗光遮罩 (兼容性修复：使用严格的 rgba) -->
+      <view class="absolute inset-0 transition-all duration-500"
+        :class="isDark ? 'bg-[rgba(0,0,0,0.45)]' : 'bg-[rgba(0,0,0,0.15)]'" />
     </view>
 
     <!-- 2. 自定义动态渐变导航栏 (向下滚动后显示高透毛玻璃) -->
     <view class="fixed top-0 left-0 w-full z-50 transition-all duration-500 flex items-center px-4 overflow-visible"
-      :class="isScrolled ? (isDark ? 'bg-black/55 backdrop-blur-md border-b border-white/5' : 'bg-white/55 backdrop-blur-md border-b border-white/40') : 'bg-transparent'"
+      :class="isScrolled ? (isDark ? 'bg-[rgba(0,0,0,0.55)] backdrop-blur-md border-b border-[rgba(255,255,255,0.05)]' : 'bg-[rgba(255,255,255,0.55)] backdrop-blur-md border-b border-[rgba(255,255,255,0.4)]') : 'bg-transparent'"
       :style="{ height: navBarHeight + 'px', paddingTop: statusBarHeight + 'px' }">
       <view class="flex items-center justify-between w-full overflow-visible">
         <!-- 页面标题，滚动后才淡入显示 -->
@@ -27,8 +28,8 @@
           class="w-[72rpx] h-[72rpx] rounded-full flex items-center justify-center active:scale-90 transition-all duration-500 ease-out cursor-pointer translate-y-3"
           :class="[
             isScrolled
-              ? (isDark ? 'bg-white/10 translate-x-0' : 'bg-black/5 translate-x-0')
-              : 'bg-white/20 backdrop-blur-md border border-white/20 translate-x-[48rpx] opacity-75'
+              ? (isDark ? 'bg-[rgba(255,255,255,0.1)] translate-x-0' : 'bg-[rgba(0,0,0,0.05)] translate-x-0')
+              : 'bg-[rgba(255,255,255,0.2)] backdrop-blur-md border border-[rgba(255,255,255,0.2)] translate-x-[48rpx] opacity-75'
           ]" @click="toggleTheme">
           <!-- 优先加载本地图片 -->
           <image class="w-[38rpx] h-[38rpx]"
@@ -45,16 +46,16 @@
           {{ siteInfo?.title || '伴莺的小窝' }}
         </text>
         <!-- 博客副标题/简介 (网页版留白风) -->
-        <view class="h-[2rpx] w-[120rpx] bg-white/60 mx-auto my-4 rounded-full" />
-        <text class="text-[26rpx] text-white/80 font-light tracking-wide block drop-shadow-md px-4">
+        <view class="h-[2rpx] w-[120rpx] bg-[rgba(255,255,255,0.6)] mx-auto my-4 rounded-full" />
+        <text class="text-[26rpx] text-[rgba(255,255,255,0.8)] font-light tracking-wide block drop-shadow-md px-4">
           {{ siteInfo?.subtitle || '伴莺の小破站' }}
         </text>
       </view>
 
-      <!-- 引导向下滑动指示器 (离线图片箭头，移除 Emoji) -->
+      <!-- 引导向下滑动指示器 (离线图片箭头) -->
       <view class="absolute bottom-[8vh] flex flex-col items-center animate-bounce cursor-pointer"
         @click="scrollToContent">
-        <text class="text-[20rpx] text-white/60 tracking-widest mb-2.5 font-light">SCROLL DOWN</text>
+        <text class="text-[20rpx] text-[rgba(255,255,255,0.6)] tracking-widest mb-2.5 font-light">SCROLL DOWN</text>
         <!-- 向下箭头图 -->
         <image class="w-[32rpx] h-[32rpx] opacity-75" src="/static/home/arrow-down.png" mode="aspectFit" />
       </view>
@@ -66,7 +67,7 @@
       <!-- 4.1 悬浮个人信息玻璃卡片 (网页版左边栏精粹) -->
       <view
         class="w-full rounded-[40rpx] p-[30rpx] box-border shadow-xl border backdrop-blur-xl transition-all duration-500 mb-8"
-        :class="isDark ? 'bg-black/40 border-white/10 shadow-black/40' : 'bg-white/65 border-white/60 shadow-gray-200/50'">
+        :class="isDark ? 'bg-[rgba(0,0,0,0.4)] border-[rgba(255,255,255,0.1)]' : 'bg-[rgba(255,255,255,0.65)] border-[rgba(255,255,255,0.6)]'">
         <view class="flex items-center">
           <!-- 头像 -->
           <view
@@ -85,8 +86,9 @@
           </view>
         </view>
 
-        <!-- 站点快速统计项 (采用高精细本地矢量图标代替 SVG 和 Emoji) -->
-        <view class="grid grid-cols-3 pt-5 border-t" :class="isDark ? 'border-white/10' : 'border-gray-200/50'">
+        <!-- 站点快速统计项 -->
+        <view class="grid grid-cols-3 pt-5 border-t mt-4"
+          :class="isDark ? 'border-[rgba(255,255,255,0.1)]' : 'border-[rgba(229,231,235,0.5)]'">
           <view class="flex flex-col items-center">
             <!-- 统计文章图标 -->
             <image class="w-[38rpx] h-[38rpx] mb-1.5" src="/static/home/posts.png" mode="aspectFit" />
@@ -94,7 +96,8 @@
             <text class="text-[20rpx]" :class="isDark ? 'text-gray-400' : 'text-gray-500'">文章</text>
           </view>
 
-          <view class="flex flex-col items-center border-x" :class="isDark ? 'border-white/10' : 'border-gray-200/50'">
+          <view class="flex flex-col items-center border-x"
+            :class="isDark ? 'border-[rgba(255,255,255,0.1)]' : 'border-[rgba(229,231,235,0.5)]'">
             <!-- 分类图标 -->
             <image class="w-[38rpx] h-[38rpx] mb-1.5" src="/static/home/categories.png" mode="aspectFit" />
             <text class="text-[32rpx] font-bold text-[#42b983]">4</text>
@@ -122,36 +125,36 @@
       <view class="flex flex-col gap-[28rpx]">
         <view v-for="(item, index) in postList" :key="item.slug"
           class="w-full rounded-[28rpx] overflow-hidden border backdrop-blur-lg shadow-sm hover:shadow-md p-[28rpx] box-border transition-all duration-300 active:scale-[0.99] flex items-center gap-[24rpx]"
-          :class="isDark ? 'bg-zinc-900/50 border-white/5 shadow-black/10' : 'bg-white/75 border-white/50 shadow-gray-100'"
+          :class="isDark ? 'bg-[rgba(24,24,27,0.5)] border-[rgba(255,255,255,0.05)]' : 'bg-[rgba(255,255,255,0.75)] border-[rgba(255,255,255,0.5)]'"
           @click="goToDetail(item.slug)">
 
           <!-- 左侧：主要内容区域 (自适应分配空间) -->
           <view class="flex-1 flex flex-col justify-between min-h-[150rpx] overflow-hidden">
             <view class="flex flex-col">
-              <!-- 分类徽章：小巧灵动，不占用独立段落高度 -->
+              <!-- 分类徽章 -->
               <view v-if="item.categories && item.categories.length > 0" class="mb-1.5 flex">
                 <text class="px-2 py-[2rpx] rounded-[6rpx] text-[18rpx] font-semibold tracking-wide uppercase border"
-                  :class="isDark ? 'bg-[#42b983]/5 border-[#42b983]/20 text-[#42b983]' : 'bg-[#42b983]/10 border-[#42b983]/15 text-[#309b6c]'">
+                  :class="isDark ? 'bg-[rgba(66,185,131,0.05)] border-[rgba(66,185,131,0.2)] text-[#42b983]' : 'bg-[rgba(66,185,131,0.1)] border-[rgba(66,185,131,0.15)] text-[#309b6c]'">
                   {{ item.categories[0].name }}
                 </text>
               </view>
 
-              <!-- 文章标题：严格限制字重与2行溢出 -->
+              <!-- 文章标题 -->
               <text class="text-[28rpx] font-bold leading-snug line-clamp-2 transition-colors mb-1"
                 :class="isDark ? 'text-white' : 'text-gray-800'">
                 {{ item.title }}
               </text>
 
-              <!-- 精确1行文章摘要：提升留白呼吸感，降低视觉疲劳 -->
+              <!-- 精确1行文章摘要 -->
               <text class="text-[23rpx] line-clamp-1 leading-relaxed mb-2"
                 :class="isDark ? 'text-gray-400' : 'text-gray-500'">
                 {{ item.excerpt || '点击进入阅读详情，查看关于本篇更新日志、代码实践和详细教程。' }}
               </text>
             </view>
 
-            <!-- 底部元数据信息（日期与极简双标签联动） -->
-            <view class="flex items-center justify-between pt-2"
-              :class="isDark ? 'border-white/5' : 'border-gray-100/80'">
+            <!-- 底部元数据信息 -->
+            <view class="flex items-center justify-between pt-2 border-t"
+              :class="isDark ? 'border-[rgba(255,255,255,0.05)]' : 'border-[rgba(243,244,246,0.8)]'">
               <!-- 日期显示 -->
               <view class="flex items-center text-gray-400 flex-shrink-0">
                 <image class="w-[24rpx] h-[24rpx] mr-1" src="/static/home/calendar.png" mode="aspectFit" />
@@ -160,24 +163,23 @@
                 </text>
               </view>
 
-              <!-- 标签流 (动态展示多达 2 个高精细药丸标签) -->
+              <!-- 标签流 -->
               <view v-if="item.tags && item.tags.length > 0"
                 class="flex gap-1.5 overflow-hidden justify-end flex-1 pl-3">
                 <text v-for="tag in item.tags.slice(0, 2)" :key="tag.name"
                   class="px-2 py-[2rpx] rounded-[6rpx] text-[17rpx] font-semibold transition-all duration-300" :class="isDark
-                    ? 'bg-[#42b983]/10 text-[#42b983] border border-[#42b983]/20'
-                    : 'bg-[#42b983]/5 text-[#309b6c] border border-[#42b983]/10'">
+                    ? 'bg-[rgba(66,185,131,0.1)] text-[#42b983] border border-[rgba(66,185,131,0.2)]'
+                    : 'bg-[rgba(66,185,131,0.05)] text-[#309b6c] border border-[rgba(66,185,131,0.1)]'">
                   # {{ tag.name }}
                 </text>
               </view>
             </view>
           </view>
 
-          <!-- 右侧：精美小巧的封面大图 (固定比例尺寸，防止页面被过高大图撑碎) -->
+          <!-- 右侧：精美小巧的封面大图 -->
           <view class="w-[200rpx] h-[150rpx] rounded-[18rpx] overflow-hidden flex-shrink-0 shadow-sm relative">
             <image class="w-full h-full object-cover" :src="resolveMediaUrl(item.cover)" mode="aspectFill" />
-            <!-- 高雅的渐变底层遮罩 -->
-            <view class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+            <view class="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.1)] to-transparent" />
           </view>
         </view>
       </view>
@@ -256,7 +258,7 @@ const formatDate = (dateStr: string) => {
   return `${year}-${month}-${day}`;
 };
 
-// 6. 页面滚动引导 (类型安全重构版本，完美解决 TS 编译报错问题)
+// 6. 页面滚动引导
 const scrollToContent = () => {
   const query = uni.createSelectorQuery();
   query.select('#content-anchor').boundingClientRect((data) => {
@@ -264,7 +266,7 @@ const scrollToContent = () => {
     const rect = Array.isArray(data) ? data[0] : data;
     if (rect && typeof rect.top === 'number') {
       uni.pageScrollTo({
-        scrollTop: scrollTop.value + rect.top - navBarHeight.value - statusBarHeight.value - 20, // 额外留白20rpx
+        scrollTop: scrollTop.value + rect.top - navBarHeight.value - statusBarHeight.value - 20,
         duration: 500
       });
     }
@@ -302,16 +304,18 @@ const fetchArticlesList = async (page: number, append = false) => {
 
 // 8. 生命周期钩子
 onLoad(() => {
-  // 动态获取系统状态栏和导航条参数
+  // --- 微信端兼容性修复：使用 getWindowInfo 替代 getSystemInfoSync ---
+  // #ifdef MP-WEIXIN
+  const windowInfo = uni.getWindowInfo();
+  statusBarHeight.value = windowInfo.statusBarHeight || 20;
+  const menuButton = uni.getMenuButtonBoundingClientRect();
+  navBarHeight.value = (menuButton.bottom + menuButton.top) - statusBarHeight.value;
+  // #endif
+
+  // --- 非微信端兜底逻辑 ---
+  // #ifndef MP-WEIXIN
   const sysInfo = uni.getSystemInfoSync();
   statusBarHeight.value = sysInfo.statusBarHeight || 20;
-
-  // 微信胶囊安全区修正
-  // #ifdef MP-WEIXIN
-  const menuButton = uni.getMenuButtonBoundingClientRect();
-  navBarHeight.value = (menuButton.bottom + menuButton.top) - (sysInfo.statusBarHeight || 0);
-  // #endif
-  // #ifndef MP-WEIXIN
   navBarHeight.value = statusBarHeight.value + 44;
   // #endif
 

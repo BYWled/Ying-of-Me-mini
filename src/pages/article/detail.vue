@@ -10,7 +10,8 @@
                 :class="isScrolled ? (isDark ? 'bg-[#1e1e1e]/95 backdrop-blur-md shadow-md opacity-100' : 'bg-white/95 backdrop-blur-md shadow-sm opacity-100') : 'opacity-0'">
             </view>
 
-            <view class="relative h-[44px] flex items-center px-[32rpx] max-w-[80vw] pointer-events-auto box-border w-full">
+            <view
+                class="relative h-[44px] flex items-center px-[32rpx] max-w-[75%] pointer-events-auto box-border w-full">
                 <view
                     class="p-[12rpx] -ml-[12rpx] active:scale-90 transition-all duration-300 rounded-full flex items-center justify-center"
                     :class="!isScrolled ? 'bg-black/30 backdrop-blur-sm' : ''" @click="goBack">
@@ -85,7 +86,7 @@
 
                 <!-- 富文本正文卡片 (同样确保内部元素不会横向溢出) -->
                 <view
-                    class="rounded-[32rpx] p-[32rpx] shadow-sm transition-colors duration-500 overflow-hidden box-border w-full"
+                    class="rounded-[32rpx] p-[32rpx] pt-[0] shadow-sm transition-colors duration-500 overflow-hidden box-border w-full"
                     :class="isDark ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white/95 border border-white/60'">
                     <mp-html ref="articleHtml" :key="isDark ? 'dark' : 'light'" :content="processedContent"
                         :tag-style="isDark ? markdownStylesDark : markdownStyles" domain="https://www.wled.top"
@@ -163,7 +164,8 @@ const scrollTop = ref(0)
 const readProgress = ref(0)
 const contentHeight = ref(0)
 
-const systemInfo = uni.getSystemInfoSync()
+// 修复点：使用 getWindowInfo 替代已废弃的 getSystemInfoSync，并保留向后兼容兜底
+const systemInfo = uni.getWindowInfo ? uni.getWindowInfo() : uni.getSystemInfoSync()
 const statusBarHeight = ref(systemInfo.statusBarHeight || 20)
 const navBarHeight = computed(() => statusBarHeight.value + 44)
 const isScrolled = computed(() => scrollTop.value > 250)
@@ -234,8 +236,8 @@ const processHexoContent = (html: string, isDark: boolean) => {
         let cleanSummary = summaryContent.replace(/<i[^>]*>.*?<\/i>/ig, '').trim();
 
         // 生成极致内联样式，绝对无法被覆盖
-        let detailsStyle = `border-radius: 16rpx; margin: 32rpx 0; overflow: hidden; display: block; border: 1px solid rgba(${theme.rgb},${isDark ? '0.15' : '0.2'}); background: rgba(${theme.rgb},${isDark ? '0.05' : '0.02'});`;
-        let summaryStyle = `font-weight: 700; color: ${theme.text}; padding: 24rpx; display: block; cursor: pointer; background: rgba(${theme.rgb},${isDark ? '0.1' : '0.08'}); border-bottom: 1px solid rgba(${theme.rgb}, 0.1); font-size: 30rpx;`;
+        let detailsStyle = `border-radius: 16rpx; margin: 32rpx 0;padding: 16rpx; overflow: hidden; display: block; border: 1px solid rgba(${theme.rgb},${isDark ? '0.15' : '0.2'}); background: rgba(${theme.rgb},${isDark ? '0.05' : '0.02'});`;
+        let summaryStyle = `font-weight: 700; color: ${theme.text}; padding: 12rpx; display: block; cursor: pointer; background: rgba(${theme.rgb},${isDark ? '0.1' : '0'}); border-bottom: 1px solid rgba(${theme.rgb}, 0.1); font-size: 30rpx;`;
 
         return `<details style="${detailsStyle}" ${cleanAttrs}>${space}<summary style="${summaryStyle}">${cleanSummary}</summary>`;
     });
