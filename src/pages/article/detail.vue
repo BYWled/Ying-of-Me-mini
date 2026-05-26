@@ -85,14 +85,12 @@
 
                 <!-- 富文本正文卡片 -->
                 <view
-                    class="rounded-[32rpx] p-[32rpx] shadow-sm transition-colors duration-500 overflow-hidden box-border w-full"
+                    class="rounded-[32rpx] p-[32rpx] pt-[12rpx] bg-white shadow-sm transition-colors duration-500 overflow-hidden box-border w-full"
                     :class="isDark ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white/95 border border-white/60'">
-                    <view :class="isPage ? 'pt-[12rpx]' : 'pt-0'">
-                        <mp-html ref="articleHtml" :key="isDark ? 'dark' : 'light'" :content="processedContent"
-                            :tag-style="isDark ? markdownStylesDark : markdownStyles" domain="https://www.wled.top"
-                            :selectable="true" :lazy-load="true" :use-anchor="navBarHeight" @linktap="handleLinkTap"
-                            @ready="handleHtmlReady" />
-                    </view>
+                    <mp-html ref="articleHtml" :key="isDark ? 'dark' : 'light'" :content="processedContent"
+                        :tag-style="isDark ? markdownStylesDark : markdownStyles" domain="https://www.wled.top"
+                        :selectable="true" :lazy-load="true" :use-anchor="navBarHeight" @linktap="handleLinkTap"
+                        @ready="handleHtmlReady" />
                 </view>
             </view>
 
@@ -170,7 +168,6 @@ const statusBarHeight = ref(systemInfo.statusBarHeight || 20)
 const navBarHeight = computed(() => statusBarHeight.value + 44)
 const isScrolled = computed(() => scrollTop.value > 250)
 const articleHtml = ref()
-const isPage = ref(false)
 
 const sanitizeId = (id: string) => {
     let decoded = id;
@@ -333,7 +330,6 @@ onLoad(async (options) => {
         isLoading.value = false
         return
     }
-    isPage.value = type === 'page'
     try {
         const res = type === 'page'
             ? await blogApi.getIsolatedPageDetail(slug)
