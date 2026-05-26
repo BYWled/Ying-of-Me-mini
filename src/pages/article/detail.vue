@@ -1,4 +1,5 @@
 <template>
+    <!-- 彻底锁死横向滚动的终极方案：根节点限制 max-w-[100vw] 和 overflow-x-hidden -->
     <view
         :class="['relative min-h-screen pb-[120rpx] transition-colors duration-500 overflow-x-hidden max-w-[100vw]', isDark ? 'bg-[#121212]' : 'bg-[#f0f2f5]']">
 
@@ -44,7 +45,6 @@
                 :class="isDark ? 'bg-gradient-to-b from-black/40 via-black/60 to-[#121212]' : 'bg-gradient-to-b from-black/20 via-black/10 to-[#f0f2f5]'">
             </view>
 
-            <!-- 修复点 2：使用 mx-[32rpx] (外边距) 代替 w-full + px，完美规避盒模型导致的总宽度溢出 -->
             <view class="article-container relative z-10 pt-[28vh] pb-[40rpx]">
 
                 <!-- 文章标题与元数据卡片 -->
@@ -57,7 +57,7 @@
                     </text>
 
                     <view class="flex items-center flex-wrap gap-y-[16rpx]">
-                        <view class="flex items-center mr-[32rpx]">
+                        <view class="flex items-center mr-[32rpx]" v-if="article.date">
                             <image src="/static/home/calendar.png" class="w-[28rpx] h-[28rpx] mr-[12rpx] opacity-60"
                                 :class="isDark ? 'invert' : ''" mode="aspectFit" />
                             <text class="text-[24rpx] font-medium"
@@ -164,7 +164,6 @@ const scrollTop = ref(0)
 const readProgress = ref(0)
 const contentHeight = ref(0)
 
-// 修复点：使用 getWindowInfo 替代已废弃的 getSystemInfoSync，并保留向后兼容兜底
 const systemInfo = uni.getWindowInfo ? uni.getWindowInfo() : uni.getSystemInfoSync()
 const statusBarHeight = ref(systemInfo.statusBarHeight || 20)
 const navBarHeight = computed(() => statusBarHeight.value + 44)
@@ -199,17 +198,14 @@ const getThemeColors = (cls: string, isDark: boolean) => {
     return { hex: '#42b983', rgb: '66,185,131', text: isDark ? '#42b983' : '#42b983' }; // 默认薄荷绿
 }
 
-// --- 修复点 1：终极内联样式注入引擎，100% 保证样式无法被丢弃 ---
 const processHexoContent = (html: string, isDark: boolean) => {
     if (!html) return '';
     let res = html;
 
-    // 1. 净化 ID (彻底保障 Anchor 跳转无报错)
     res = res.replace(/<h([1-6])([^>]*)id="([^"]+)"/ig, (match, level, attrs, id) => {
         return `<h${level}${attrs}id="anchor-${sanitizeId(id)}"`;
     });
 
-    // 2. 深度脱壳：解构 Tabs，内联化
     const tabMap: Record<string, string> = {};
     res = res.replace(/<button[^>]*data-tab="([^"]+)"[^>]*>([\s\S]*?)<\/button>/ig, (match, tabId, tabName) => {
         tabMap[tabId] = tabName.replace(/<[^>]+>/g, '').trim();
@@ -220,7 +216,6 @@ const processHexoContent = (html: string, isDark: boolean) => {
         let id = idMatch ? idMatch[1] : null;
         let cleanTag = match.replace(/\bhidden(?:="[^"]*")?\b/gi, '');
 
-        // 内联生成的精美 Tab 标题
         let titleStyle = `font-size: 30rpx; font-weight: bold; color: ${isDark ? '#e5e7eb' : '#374151'}; margin: 40rpx 0 16rpx 0; padding-bottom: 12rpx; border-bottom: 2rpx solid rgba(66,185,131,${isDark ? '0.1' : '0.2'}); display: flex; align-items: center;`;
         let indicatorStyle = `width: 8rpx; height: 28rpx; background: #42b983; border-radius: 4rpx; margin-right: 16rpx; display: inline-block;`;
 
@@ -228,28 +223,24 @@ const processHexoContent = (html: string, isDark: boolean) => {
         return cleanTag + title;
     });
 
-    // 3. 深度脱壳：折叠块 (Details/Summary) 的强力合并替换
     res = res.replace(/<details([^>]*)>(\s*)<summary[^>]*>([\s\S]*?)<\/summary>/ig, (m, attrs, space, summaryContent) => {
         let clsMatch = attrs.match(/class="([^"]*)"/i);
         let theme = getThemeColors(clsMatch ? clsMatch[1] : '', isDark);
         let cleanAttrs = attrs.replace(/class="[^"]*"/i, '');
         let cleanSummary = summaryContent.replace(/<i[^>]*>.*?<\/i>/ig, '').trim();
 
-        // 生成极致内联样式，绝对无法被覆盖
         let detailsStyle = `border-radius: 16rpx; margin: 32rpx 0;padding: 16rpx; overflow: hidden; display: block; border: 1px solid rgba(${theme.rgb},${isDark ? '0.15' : '0.2'}); background: rgba(${theme.rgb},${isDark ? '0.05' : '0.02'});`;
         let summaryStyle = `font-weight: 700; color: ${theme.text}; padding: 12rpx; display: block; cursor: pointer; background: rgba(${theme.rgb},${isDark ? '0.1' : '0'}); border-bottom: 1px solid rgba(${theme.rgb}, 0.1); font-size: 30rpx;`;
 
         return `<details style="${detailsStyle}" ${cleanAttrs}>${space}<summary style="${summaryStyle}">${cleanSummary}</summary>`;
     });
 
-    // 4. 深度脱壳：提示块 (Note/Hint)
     res = res.replace(/<div([^>]*)class="([^"]*)(note|tip|info|warning|danger|error|success|blue|red|yellow|green)([^"]*)"([^>]*)>/ig, (m, p1, c1, type, c2, p5) => {
         let theme = getThemeColors(c1 + type + c2, isDark);
         let hintStyle = `padding: 24rpx 32rpx; margin: 32rpx 0; border-radius: 12rpx; border-left: 8rpx solid ${theme.hex}; background: rgba(${theme.rgb},${isDark ? '0.08' : '0.05'}); display: block; font-size: 28rpx; color: ${isDark ? '#e5e7eb' : '#374151'};`;
         return `<div${p1} style="${hintStyle}"${p5}>`;
     });
 
-    // 5. 解构代码块 (完美包裹滚动区，确保 max-width 封死)
     res = res.replace(/<figure[^>]*class="[^"]*highlight[^"]*"[^>]*>([\s\S]*?)<\/figure>/ig, (match, innerHtml) => {
         let newInner = innerHtml.replace(/<td[^>]*class="[^"]*gutter[^"]*"[^>]*>[\s\S]*?<\/td>/ig, '');
         newInner = newInner.replace(/<td[^>]*class="[^"]*code[^"]*"[^>]*>/ig, '<td style="padding: 24rpx; border: none; width: 100%; box-sizing: border-box;">');
@@ -262,7 +253,6 @@ const processHexoContent = (html: string, isDark: boolean) => {
     return res;
 }
 
-// --- 基础排版映射表 ---
 const markdownStyles = {
     h1: 'font-size: 42rpx; font-weight: 800; margin: 50rpx 0 24rpx 0; color: #1f2937;',
     h2: 'font-size: 38rpx; font-weight: 700; margin: 48rpx 0 24rpx 0; color: #1f2937; padding-bottom: 16rpx; border-bottom: 1px solid #f3f4f6;',
@@ -300,19 +290,23 @@ const markdownStylesDark = {
 // --- 逻辑与生命周期 ---
 onLoad(async (options) => {
     const slug = options?.slug
+    const type = options?.type // 提取 type 参数
     if (!slug) {
         isLoading.value = false
         return
     }
     try {
-        const res = await blogApi.getArticleDetail(slug)
+        // 根据 type 参数判断是否调用获取孤岛页面数据的 API
+        const res = type === 'page'
+            ? await blogApi.getIsolatedPageDetail(slug)
+            : await blogApi.getArticleDetail(slug)
+
         article.value = res
-        // 初始化时，使用当前主题处理数据并附加上高亮引擎的 CSS
         const cleanContent = processHexoContent(res.content, isDark.value)
         processedContent.value = getHighlightCss(isDark.value) + cleanContent
         extractTOC(cleanContent)
     } catch (error) {
-        console.error('获取文章详情失败:', error)
+        console.error('获取详情失败:', error)
     } finally {
         isLoading.value = false
     }
@@ -357,7 +351,6 @@ const formatDate = (dateStr: string) => {
 const toggleTheme = () => {
     isDark.value = !isDark.value
     if (article.value) {
-        // 核心修复：切换主题时重新执行深层正则注入，硬更新每一块的内联颜色！
         const cleanContent = processHexoContent(article.value.content, isDark.value)
         processedContent.value = getHighlightCss(isDark.value) + cleanContent
     }
@@ -388,7 +381,7 @@ const extractTOC = (html: string) => {
 const jumpToAnchor = (id: string) => {
     showToc.value = false
     if (articleHtml.value) {
-        articleHtml.value.navigateTo(id, -navBarHeight.value - 12) // 20 是额外的安全偏移，确保标题不会被导航栏遮挡
+        articleHtml.value.navigateTo(id, -navBarHeight.value - 12)
     }
 }
 

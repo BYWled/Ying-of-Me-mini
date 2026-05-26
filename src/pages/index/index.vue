@@ -16,7 +16,7 @@
       :style="{ height: navBarHeight + 'px', paddingTop: statusBarHeight + 'px' }">
       <view class="flex items-center justify-between w-full overflow-visible">
         <!-- 页面标题，滚动后才淡入显示 -->
-        <text class="text-[34rpx] font-bold transition-all duration-500" :class="[
+        <text class="text-[34rpx] font-bold transition-all duration-500 ml-[12rpx] mb-[25rpx]" :class="[
           isScrolled ? 'opacity-100' : 'opacity-0 translate-y-[-20rpx]',
           isDark ? 'text-white' : 'text-gray-800'
         ]">
