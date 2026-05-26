@@ -1,5 +1,4 @@
 <template>
-    <!-- 彻底锁死横向滚动的终极方案：根节点限制 max-w-[100vw] 和 overflow-x-hidden -->
     <view
         :class="['relative min-h-screen pb-[120rpx] transition-colors duration-500 overflow-x-hidden max-w-[100vw]', isDark ? 'bg-[#121212]' : 'bg-[#f0f2f5]']">
 
@@ -84,18 +83,20 @@
                     </view>
                 </view>
 
-                <!-- 富文本正文卡片 (同样确保内部元素不会横向溢出) -->
+                <!-- 富文本正文卡片 -->
                 <view
-                    class="rounded-[32rpx] p-[32rpx] pt-[0] shadow-sm transition-colors duration-500 overflow-hidden box-border w-full"
+                    class="rounded-[32rpx] p-[32rpx] shadow-sm transition-colors duration-500 overflow-hidden box-border w-full"
                     :class="isDark ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white/95 border border-white/60'">
-                    <mp-html ref="articleHtml" :key="isDark ? 'dark' : 'light'" :content="processedContent"
-                        :tag-style="isDark ? markdownStylesDark : markdownStyles" domain="https://www.wled.top"
-                        :selectable="true" :lazy-load="true" :use-anchor="navBarHeight" @linktap="handleLinkTap"
-                        @ready="handleHtmlReady" />
+                    <view :class="isPage ? 'pt-[12rpx]' : 'pt-0'">
+                        <mp-html ref="articleHtml" :key="isDark ? 'dark' : 'light'" :content="processedContent"
+                            :tag-style="isDark ? markdownStylesDark : markdownStyles" domain="https://www.wled.top"
+                            :selectable="true" :lazy-load="true" :use-anchor="navBarHeight" @linktap="handleLinkTap"
+                            @ready="handleHtmlReady" />
+                    </view>
                 </view>
             </view>
 
-            <!-- 悬浮操作按钮组 (右下角工具箱) -->
+            <!-- 悬浮操作按钮组 -->
             <view class="fixed bottom-[60rpx] right-[40rpx] flex flex-col gap-[24rpx] z-40">
                 <view class="tool-btn" :class="isDark ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white/90 border-gray-100'"
                     @click="toggleTheme">
@@ -169,6 +170,7 @@ const statusBarHeight = ref(systemInfo.statusBarHeight || 20)
 const navBarHeight = computed(() => statusBarHeight.value + 44)
 const isScrolled = computed(() => scrollTop.value > 250)
 const articleHtml = ref()
+const isPage = ref(false)
 
 const sanitizeId = (id: string) => {
     let decoded = id;
@@ -176,7 +178,7 @@ const sanitizeId = (id: string) => {
     return decoded.replace(/[^a-zA-Z0-9\-_]/g, '_');
 }
 
-// 提取代码高亮的核心 CSS，保证代码染色有效
+// 提取代码高亮的核心 CSS
 const getHighlightCss = (isDark: boolean) => `
 <style>
   figure.highlight { display: none; } 
@@ -189,13 +191,12 @@ const getHighlightCss = (isDark: boolean) => `
 </style>
 `;
 
-// 获取对应的颜色主题配置
 const getThemeColors = (cls: string, isDark: boolean) => {
     if (cls.includes('blue') || cls.includes('info')) return { hex: '#409eff', rgb: '64,158,255', text: '#409eff' };
     if (cls.includes('red') || cls.includes('danger') || cls.includes('error')) return { hex: '#f56c6c', rgb: '245,108,108', text: '#f56c6c' };
     if (cls.includes('yellow') || cls.includes('warning')) return { hex: '#e6a23c', rgb: '230,162,60', text: '#e6a23c' };
     if (cls.includes('green') || cls.includes('success')) return { hex: '#67c23a', rgb: '103,194,58', text: '#67c23a' };
-    return { hex: '#42b983', rgb: '66,185,131', text: isDark ? '#42b983' : '#42b983' }; // 默认薄荷绿
+    return { hex: '#42b983', rgb: '66,185,131', text: isDark ? '#42b983' : '#42b983' };
 }
 
 const processHexoContent = (html: string, isDark: boolean) => {
@@ -250,6 +251,43 @@ const processHexoContent = (html: string, isDark: boolean) => {
         return `<div style="${blockStyle}">${newInner}</div>`;
     });
 
+    // --- 修复重点：强制剥离懒加载防线，还原真实图片 URL (补充 TS 类型定义) ---
+    res = res.replace(/<img([^>]*)>/ig, (match: string, attrs: string) => {
+        let newAttrs = attrs;
+
+        // 查找隐藏在自定义属性中的真实图片路径 (Hexo 常用懒加载插件特性)
+        const dataSrcMatch = newAttrs.match(/data-(?:lazy-)?src="([^"]+)"/i) || newAttrs.match(/data-original="([^"]+)"/i);
+        let realSrc = '';
+
+        if (dataSrcMatch) {
+            realSrc = dataSrcMatch[1];
+        } else {
+            const srcMatch = newAttrs.match(/src="([^"]+)"/i);
+            if (srcMatch) realSrc = srcMatch[1];
+        }
+
+        if (realSrc) {
+            // 如果是绝对域名，原样保留；如果是相对路径，强行绑定主域名
+            if (realSrc.startsWith('/')) {
+                realSrc = 'https://www.wled.top' + realSrc;
+            }
+
+            // 覆盖替换原本可能有问题的 src 属性
+            if (/src="[^"]*"/i.test(newAttrs)) {
+                newAttrs = newAttrs.replace(/src="[^"]*"/i, `src="${realSrc}"`);
+            } else {
+                newAttrs += ` src="${realSrc}"`;
+            }
+        }
+
+        // 抹除 lazyload class 防止与 mp-html 的加载机制产生冲突 (补充 TS 类型定义)
+        newAttrs = newAttrs.replace(/class="([^"]*)"/i, (m: string, cls: string) => {
+            return `class="${cls.replace(/lazyload/ig, '').trim()}"`;
+        });
+
+        return `<img${newAttrs}>`;
+    });
+
     return res;
 }
 
@@ -290,13 +328,13 @@ const markdownStylesDark = {
 // --- 逻辑与生命周期 ---
 onLoad(async (options) => {
     const slug = options?.slug
-    const type = options?.type // 提取 type 参数
+    const type = options?.type
     if (!slug) {
         isLoading.value = false
         return
     }
+    isPage.value = type === 'page'
     try {
-        // 根据 type 参数判断是否调用获取孤岛页面数据的 API
         const res = type === 'page'
             ? await blogApi.getIsolatedPageDetail(slug)
             : await blogApi.getArticleDetail(slug)
@@ -312,7 +350,6 @@ onLoad(async (options) => {
     }
 })
 
-// 监听滚动事件，计算阅读进度条
 onPageScroll((e) => {
     scrollTop.value = e.scrollTop
     if (contentHeight.value > 0) {
@@ -385,8 +422,9 @@ const jumpToAnchor = (id: string) => {
     }
 }
 
+// --- 修复重点：重写网络路由拦截系统 ---
 const handleLinkTap = (e: any) => {
-    const href = e.href
+    let href = e.href
     if (!href) return
 
     if (href.startsWith('#')) {
@@ -396,16 +434,83 @@ const handleLinkTap = (e: any) => {
         }
         let safeId = 'anchor-' + sanitizeId(rawId)
         jumpToAnchor(safeId)
-    } else if (href.startsWith('http')) {
+        return
+    }
+
+    // 1. 路径预处理：如果是相对路径或包含 ..，先进行简单清洗
+    if (href.startsWith('./')) href = href.substring(2);
+    if (href.startsWith('../')) {
+        // 简单处理跨级路径，如果是纯相对的，直接移除 .. 以确保解析不出错
+        href = href.replace(/\.\.\//g, '');
+    }
+
+    // 2. 格式化并保证能正常解析 URL
+    let urlStr = href;
+    if (urlStr.startsWith('//')) {
+        urlStr = 'https:' + urlStr;
+    } else if (urlStr.startsWith('www.') || urlStr.startsWith('mirror.')) {
+        urlStr = 'https://' + urlStr;
+    } else if (urlStr.startsWith('/')) {
+        urlStr = 'https://www.wled.top' + urlStr;
+    } else if (!urlStr.startsWith('http')) {
+        urlStr = 'https://www.wled.top/' + urlStr;
+    }
+
+    // 3. 安全解析
+    let urlObj;
+    try {
+        urlObj = new URL(urlStr);
+    } catch (err) {
+        // 如果依然失败，尝试作为相对路径进行降级处理
+        console.error('URL解析失败，尝试降级:', urlStr);
+        // 这里手动将无效的 urlStr 强制拆解，避免小程序 URL 构造器崩溃
+        const pathOnly = urlStr.replace('https://www.wled.top', '').replace('https://mirror.wled.top', '');
+        handleInternalPath(pathOnly);
+        return;
+    }
+
+    const isInternal = urlObj.hostname === 'www.wled.top' || urlObj.hostname === 'mirror.wled.top';
+    if (!isInternal) {
         uni.setClipboardData({
             data: href,
-            success: () => uni.showToast({ title: '外链已复制到剪贴板', icon: 'none' })
+            success: () => uni.showToast({ title: '外链已复制', icon: 'none' })
         })
+        return;
+    }
+
+    handleInternalPath(urlObj.pathname);
+}
+
+// 提取内部路由处理逻辑，统一逻辑入口
+const handleInternalPath = (pathname: string) => {
+    if (pathname === '/' || pathname === '') {
+        uni.switchTab({ url: '/pages/index/index' });
+        return;
+    }
+
+    const parts = pathname.split('/').filter(Boolean);
+    const pageMap: Record<string, string> = {
+        'about': 'about-----',
+        'sale': '----steam--------',
+        'dozer-esports': '----dozer-esports--',
+        'novel': '-----------',
+        'ying-of-mc': 'ying-of-mc',
+        'tags': 'tags',
+        'categories': 'categories'
+    };
+
+    const firstPath = parts[0]?.toLowerCase();
+    let slug = parts[parts.length - 1]?.toLowerCase() || '';
+    slug = slug.replace(/\.html$/, '');
+
+    if (pageMap[firstPath]) {
+        uni.navigateTo({ url: `/pages/article/detail?type=page&slug=${pageMap[firstPath]}` });
+    } else if (pageMap[slug]) {
+        uni.navigateTo({ url: `/pages/article/detail?type=page&slug=${pageMap[slug]}` });
     } else {
-        const parts = href.split('/').filter(Boolean)
-        const slug = parts[parts.length - 1]
-        if (slug) {
-            uni.navigateTo({ url: `/pages/article/detail?slug=${slug}` })
+        const originalSlug = parts[parts.length - 1]?.replace(/\.html$/, '') || '';
+        if (originalSlug) {
+            uni.navigateTo({ url: `/pages/article/detail?slug=${originalSlug}` });
         }
     }
 }
