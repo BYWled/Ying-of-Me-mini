@@ -423,3 +423,21 @@ const formatDate = (dateStr: string) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 </script>
+
+<style>
+/* 隐藏滚动条 */
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  color: transparent;
+}
+
+/* 适配微信小程序的滚动条隐藏 */
+/* #ifdef MP-WEIXIN */
+scroll-view {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* #endif */
+</style>

@@ -101,10 +101,11 @@
             <view class="fixed bottom-[72rpx] flex flex-col items-center z-40"
                 :style="{ left: isFabOnLeft ? '32rpx' : 'calc(100vw - 88rpx - 32rpx)', transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }"
                 @touchstart="onFabTouchStart" @touchend="onFabTouchEnd">
-                
+
                 <!-- 展开的工具列表 (使用缩放、透明度和位移构成优雅弹出动画) -->
-                <view class="absolute bottom-full mb-[24rpx] flex flex-col gap-[24rpx] transition-all duration-300 origin-bottom"
-                      :class="isFabExpanded ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto' : 'opacity-0 scale-75 translate-y-[40rpx] pointer-events-none'">
+                <view
+                    class="absolute bottom-full mb-[24rpx] flex flex-col gap-[24rpx] transition-all duration-300 origin-bottom"
+                    :class="isFabExpanded ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto' : 'opacity-0 scale-75 translate-y-[40rpx] pointer-events-none'">
                     <view class="tool-btn"
                         :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.9)', borderColor: isDark ? '#444444' : '#f3f4f6' }"
                         @click="handleFabAction(toggleTheme)">
@@ -500,13 +501,17 @@ const toggleTheme = () => {
         processedContent.value = getHighlightCss(isDark.value) + cleanContent
     }
 
-    // 修复点 3：附加优化，动态修改微信小程序的原生页面背景色（防止下拉刷新或触底回弹时露出白底）
+    // 附加优化：动态修改微信小程序的原生页面背景色
     const bgColor = isDark.value ? '#121212' : '#f0f2f5'
-    uni.setBackgroundColor({
-        backgroundColor: bgColor,
-        backgroundColorBottom: bgColor,
-        backgroundColorTop: bgColor
-    })
+
+    // 增加跨端兼容性判断：只有在当前环境支持该 API（如微信小程序）时才调用，H5 环境下安全忽略
+    if (typeof uni.setBackgroundColor === 'function') {
+        uni.setBackgroundColor({
+            backgroundColor: bgColor,
+            backgroundColorBottom: bgColor,
+            backgroundColorTop: bgColor
+        }).catch(() => { }) // 捕获个别低版本基础库可能发生的 Promise 异常
+    }
 }
 
 const scrollToTop = () => uni.pageScrollTo({ scrollTop: 0, duration: 300 })
