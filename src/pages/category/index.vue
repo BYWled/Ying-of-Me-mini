@@ -1,12 +1,14 @@
 <template>
-  <view class="h-screen flex flex-col bg-[#f5f6f8]">
+  <view class="h-screen flex flex-col transition-colors duration-500"
+    :style="{ backgroundColor: isDark ? '#121212' : '#f5f6f8' }">
 
     <!-- 1. 全屏静止背景 (解决背景填充不全问题，利用 fixed 保证滚动时完全拉伸遮罩) -->
     <view class="fixed inset-0 w-full h-full z-0 overflow-hidden pointer-events-none">
       <image class="w-full h-full object-cover transition-all duration-700"
-        src="https://www.wled.top/images/wallhaven-wqery6-light.webp" mode="aspectFill" />
-      <!-- 视差暗光遮罩 -->
-      <view class="absolute inset-0 transition-all duration-500" />
+        :src="isDark ? 'https://www.wled.top/images/wallhaven-wqery6-dark.webp' : 'https://www.wled.top/images/wallhaven-wqery6-light.webp'"
+        mode="aspectFill" />
+      <view class="absolute inset-0 transition-all duration-500"
+        :style="{ backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'transparent' }" />
     </view>
 
     <!-- 顶部占位区：确保底部的文章详情顺延在导航栏下方 -->
@@ -22,10 +24,12 @@
         :style="{ paddingTop: statusBarHeight + 'px' }">
         <view class="px-[28rpx] py-[9rpx] h-[66rpx] max-w-[65vw] flex items-center justify-center">
           <view
-            class="bg-gray-100/80 rounded-full px-[28rpx] py-[12rpx] flex items-center flex-1 transition-all focus-within:ring-2 ring-[#42b983]/30 focus-within:bg-white">
+            class="rounded-full px-[28rpx] py-[12rpx] flex items-center flex-1 transition-all focus-within:ring-2 ring-[#42b983]/30"
+            :style="{ backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(243,244,246,0.8)' }">
             <image src="/static/category/search.png" class="w-[28rpx] h-[28rpx] mr-[12rpx] opacity-40"
               mode="aspectFit" />
-            <input class="flex-1 text-[24rpx] text-gray-700 bg-transparent h-full placeholder-gray-400" type="text"
+            <input class="flex-1 text-[24rpx] bg-transparent h-full" type="text"
+              :style="{ color: isDark ? '#e5e7eb' : '#374151' }"
               v-model="searchKeyword" placeholder="搜索文章 / 标签 / 分类" @confirm="handleSearch" />
           </view>
         </view>
@@ -37,7 +41,8 @@
           <!-- 分类区 (仅一级分类) -->
           <view class="mb-[64rpx] mt-[32rpx]">
             <view class="flex items-center justify-between mb-[32rpx] px-[8rpx]">
-              <view class="text-[32rpx] font-bold text-gray-800 flex items-center">
+              <view class="text-[32rpx] font-bold flex items-center"
+                :style="{ color: isDark ? '#e5e7eb' : '#1f2937' }">
                 <view class="w-[12rpx] h-[32rpx] bg-[#42b983] rounded-full mr-[16rpx]"></view>
                 全部分类
               </view>
@@ -45,10 +50,13 @@
 
             <view class="grid grid-cols-2 gap-[24rpx]">
               <view v-for="item in rootCategories" :key="item.name"
-                class="p-[32rpx] rounded-[24rpx] shadow-sm border border-white/50 backdrop-blur-lg hover:shadow-md flex flex-col relative overflow-hidden active:scale-99 transition-transform"
+                class="p-[32rpx] rounded-[24rpx] shadow-sm border backdrop-blur-lg hover:shadow-md flex flex-col relative overflow-hidden active:scale-99 transition-transform"
+                :style="{ backgroundColor: isDark ? 'rgba(30,30,30,0.85)' : 'rgba(255,255,255,0.8)', borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)' }"
                 @click="loadDetail('category', item.name)">
-                <text class="text-[30rpx] font-bold text-gray-800 mb-[8rpx] z-10">{{ item.name }}</text>
-                <text class="text-[24rpx] text-gray-400 z-10">{{ item.count }} 篇文章</text>
+                <text class="text-[30rpx] font-bold mb-[8rpx] z-10"
+                  :style="{ color: isDark ? '#e5e7eb' : '#1f2937' }">{{ item.name }}</text>
+                <text class="text-[24rpx] z-10"
+                  :style="{ color: isDark ? '#9ca3af' : '#9ca3af' }">{{ item.count }} 篇文章</text>
                 <!-- 装饰背景字母蒙版 -->
                 <view
                   class="absolute -right-[24rpx] -bottom-[24rpx] text-[80rpx] opacity-[0.03] text-[#42b983] font-black z-0 pointer-events-none">
@@ -61,7 +69,8 @@
           <!-- 标签区 -->
           <view class="mb-[48rpx]">
             <view class="flex items-center justify-between mb-[32rpx] px-[8rpx]">
-              <view class="text-[32rpx] font-bold text-gray-800 flex items-center">
+              <view class="text-[32rpx] font-bold flex items-center"
+                :style="{ color: isDark ? '#e5e7eb' : '#1f2937' }">
                 <view class="w-[12rpx] h-[32rpx] bg-indigo-400 rounded-full mr-[16rpx]"></view>
                 热门标签
               </view>
@@ -69,11 +78,12 @@
 
             <view class="flex flex-wrap gap-[24rpx]">
               <view
-                class="flex items-center px-[28rpx] py-[12rpx] rounded-full text-[26rpx] bg-white/80 backdrop-blur-sm border border-white shadow-sm text-gray-600 active:bg-gray-50 active:scale-95 transition-all"
+                class="flex items-center px-[28rpx] py-[12rpx] rounded-full text-[26rpx] backdrop-blur-sm border shadow-sm active:scale-95 transition-all"
+                :style="{ backgroundColor: isDark ? 'rgba(30,30,30,0.7)' : 'rgba(255,255,255,0.8)', borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', color: isDark ? '#d1d5db' : '#4b5563' }"
                 v-for="item in tags" :key="item.name" @click="loadDetail('tag', item.name)">
                 <text class="text-indigo-400 mr-[8rpx] font-bold text-[24rpx]">#</text>
                 <text class="mr-[12rpx]">{{ item.name }}</text>
-                <text class="text-[22rpx] text-gray-400">({{ item.count }})</text>
+                <text class="text-[22rpx]" :style="{ color: isDark ? '#9ca3af' : '#9ca3af' }">({{ item.count }})</text>
               </view>
             </view>
           </view>
@@ -94,7 +104,8 @@
             <image src="/static/public/back.png" class="w-[36rpx] h-[36rpx]" mode="aspectFit" />
           </view>
           <!-- 居中标题：根据状态动态显示 -->
-          <view class="text-[32rpx] font-bold text-gray-800 flex-1 text-center truncate px-[16rpx]">
+          <view class="text-[32rpx] font-bold flex-1 text-center truncate px-[16rpx]"
+            :style="{ color: isDark ? '#e5e7eb' : '#1f2937' }">
             {{
               currentSelection.type === 'category' ? currentSelection.parentName :
                 currentSelection.type === 'search' ? '搜索：' + searchKeyword :
@@ -114,13 +125,15 @@
             <!-- 分类模式下的二级分类 Tabs -->
             <template v-if="currentSelection.type === 'category'">
               <view class="inline-block px-[32rpx] py-[8rpx] mx-[12rpx] rounded-full text-[26rpx] transition-all border"
-                :class="activeTab === currentSelection.parentName ? 'bg-[#42b983] text-white border-[#42b983] shadow-sm shadow-[#42b983]/20' : 'bg-gray-100/80 text-gray-600 border-transparent active:bg-gray-200'"
+                :class="activeTab === currentSelection.parentName ? 'bg-[#42b983] text-white border-[#42b983] shadow-sm shadow-[#42b983]/20' : 'border-transparent'"
+                :style="activeTab !== currentSelection.parentName ? { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(243,244,246,0.8)', color: isDark ? '#d1d5db' : '#4b5563' } : {}"
                 @click="switchTab(currentSelection.parentName!)">
                 全部
               </view>
               <view v-for="sub in currentSubCategories" :key="sub.name"
                 class="inline-block px-[32rpx] py-[8rpx] mx-[12rpx] rounded-full text-[26rpx] transition-all border"
-                :class="activeTab === sub.name ? 'bg-[#42b983] text-white border-[#42b983] shadow-sm shadow-[#42b983]/20' : 'bg-gray-100/80 text-gray-600 border-transparent active:bg-gray-200'"
+                :class="activeTab === sub.name ? 'bg-[#42b983] text-white border-[#42b983] shadow-sm shadow-[#42b983]/20' : 'border-transparent'"
+                :style="activeTab !== sub.name ? { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(243,244,246,0.8)', color: isDark ? '#d1d5db' : '#4b5563' } : {}"
                 @click="switchTab(sub.name)">
                 {{ sub.displayName }}
               </view>
@@ -129,13 +142,15 @@
             <!-- 搜索模式下的提取一级分类 Tabs -->
             <template v-else-if="currentSelection.type === 'search'">
               <view class="inline-block px-[32rpx] py-[8rpx] mx-[12rpx] rounded-full text-[26rpx] transition-all border"
-                :class="activeTab === '全部' ? 'bg-[#42b983] text-white border-[#42b983] shadow-sm shadow-[#42b983]/20' : 'bg-gray-100/80 text-gray-600 border-transparent active:bg-gray-200'"
+                :class="activeTab === '全部' ? 'bg-[#42b983] text-white border-[#42b983] shadow-sm shadow-[#42b983]/20' : 'border-transparent'"
+                :style="activeTab !== '全部' ? { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(243,244,246,0.8)', color: isDark ? '#d1d5db' : '#4b5563' } : {}"
                 @click="switchSearchTab('全部')">
                 全部
               </view>
               <view v-for="cat in searchResultCategories" :key="cat.name"
                 class="inline-block px-[32rpx] py-[8rpx] mx-[12rpx] rounded-full text-[26rpx] transition-all border"
-                :class="activeTab === cat.name ? 'bg-[#42b983] text-white border-[#42b983] shadow-sm shadow-[#42b983]/20' : 'bg-gray-100/80 text-gray-600 border-transparent active:bg-gray-200'"
+                :class="activeTab === cat.name ? 'bg-[#42b983] text-white border-[#42b983] shadow-sm shadow-[#42b983]/20' : 'border-transparent'"
+                :style="activeTab !== cat.name ? { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(243,244,246,0.8)', color: isDark ? '#d1d5db' : '#4b5563' } : {}"
                 @click="switchSearchTab(cat.name)">
                 {{ cat.displayName }}
               </view>
@@ -150,12 +165,15 @@
         :style="{ paddingTop: (currentSelection.type === 'category' && currentSubCategories.length > 0) || (currentSelection.type === 'search' && searchResultCategories.length > 1) ? '32rpx' : '0' }">
         <view class="min-h-[calc(100%+2rpx)] px-[32rpx] pt-[32rpx] pb-[80rpx] box-border">
           <view
-            class="bg-white/80 backdrop-blur-[24rpx] border border-white p-[32rpx] rounded-[24rpx] mb-[24rpx] shadow-sm flex flex-col active:scale-[0.98] transition-transform"
+            class="backdrop-blur-[24rpx] border p-[32rpx] rounded-[24rpx] mb-[24rpx] shadow-sm flex flex-col active:scale-[0.98] transition-transform"
+            :style="{ backgroundColor: isDark ? 'rgba(30,30,30,0.85)' : 'rgba(255,255,255,0.8)', borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)' }"
             v-for="post in currentArticleList" :key="post.slug" @click="goToArticle(post.slug)">
-            <text class="text-[32rpx] text-gray-800 font-bold mb-[16rpx] leading-snug line-clamp-2">
+            <text class="text-[32rpx] font-bold mb-[16rpx] leading-snug line-clamp-2"
+              :style="{ color: isDark ? '#e5e7eb' : '#1f2937' }">
               {{ post.title }}
             </text>
-            <view class="flex items-center justify-between text-[24rpx] text-gray-400 mt-[8rpx]">
+            <view class="flex items-center justify-between text-[24rpx] mt-[8rpx]"
+              :style="{ color: isDark ? '#9ca3af' : '#9ca3af' }">
               <view class="flex items-center">
                 <text>{{ formatDate(post.date) }}</text>
               </view>
@@ -168,7 +186,8 @@
 
           <!-- 列表空状态 -->
           <view v-if="currentArticleList.length === 0"
-            class="flex flex-col items-center justify-center py-[160rpx] text-gray-400">
+            class="flex flex-col items-center justify-center py-[160rpx]"
+            :style="{ color: isDark ? '#9ca3af' : '#9ca3af' }">
             <image src="/static/category/empty.png" class="w-[256rpx] h-[256rpx] mb-[32rpx] opacity-70"
               mode="aspectFit" />
             <text class="text-[28rpx]">{{ currentSelection.type === 'search' ? '未找到包含该关键字的文章' : '此分类/标签下暂无文章' }}</text>
@@ -184,6 +203,9 @@
 import { ref, computed, onMounted } from 'vue';
 import { blogApi } from '@/api/posts';
 import { BASE_URL } from '@/api/config';
+import { useTheme } from '@/composables/useTheme';
+
+const { isDark } = useTheme();
 
 // --- 系统信息适配 ---
 // 修复 wx.getSystemInfoSync 废弃警告，优先使用新 API 获取窗口信息，向下兼容旧 API
@@ -267,6 +289,7 @@ const fetchMetaData = async () => {
  * 载入分类或标签详情 (初始化进入列表视图)
  */
 const loadDetail = (type: 'category' | 'tag', name: string) => {
+  uni.vibrateShort()
   currentSelection.value = {
     type,
     name,
@@ -279,6 +302,7 @@ const loadDetail = (type: 'category' | 'tag', name: string) => {
  * 切换子分类 Tab 获取文章数据
  */
 const switchTab = async (targetName: string) => {
+  uni.vibrateShort()
   activeTab.value = targetName;
   currentArticleList.value = [];
 
@@ -302,6 +326,7 @@ const switchTab = async (targetName: string) => {
  * 切换搜索结果中提纯的分类 Tab（纯本地过滤）
  */
 const switchSearchTab = (catName: string) => {
+  uni.vibrateShort()
   activeTab.value = catName;
   if (catName === '全部') {
     currentArticleList.value = currentSearchRawResults.value;
@@ -318,6 +343,7 @@ const switchSearchTab = (catName: string) => {
  * 重置视图回到概览
  */
 const resetView = () => {
+  uni.vibrateShort()
   currentSelection.value = { type: '', name: '' };
   activeTab.value = '';
   currentArticleList.value = [];
@@ -416,6 +442,7 @@ const handleSearch = async () => {
 };
 
 const goToArticle = (slug: string) => {
+  uni.vibrateShort()
   uni.navigateTo({
     url: `/pages/article/detail?slug=${slug}`
   });

@@ -223,8 +223,9 @@
 import { ref, computed } from 'vue';
 import { onLoad, onPullDownRefresh, onReachBottom, onPageScroll } from '@dcloudio/uni-app';
 import { blogApi } from '@/api/posts';
-import { BASE_URL } from '@/api/config'; // 引入 BASE_URL 以尊重反代配置
+import { BASE_URL } from '@/api/config';
 import type { SiteInfo, PostListItem } from '@/api/types';
+import { useTheme } from '@/composables/useTheme';
 
 // 1. 系统适配相关
 const statusBarHeight = ref(20);
@@ -235,7 +236,7 @@ const scrollTop = ref(0);
 const isScrolled = computed(() => scrollTop.value > 120);
 
 // 3. 主题管理
-const isDark = ref(false);
+const { isDark, toggleTheme } = useTheme();
 
 const heroBgUrl = computed(() => {
   return isDark.value
@@ -285,6 +286,7 @@ const formatDate = (dateStr: string) => {
 
 // 6. 页面滚动引导
 const scrollToContent = () => {
+  uni.vibrateShort()
   const query = uni.createSelectorQuery();
   query.select('#content-anchor').boundingClientRect((data) => {
     // 兼容可能返回 of NodeInfo 或 NodeInfo[] 类型
@@ -410,12 +412,8 @@ onReachBottom(() => {
 });
 
 // 10. 交互方法
-const toggleTheme = () => {
-  isDark.value = !isDark.value;
-  uni.vibrateShort({}); // 触觉反馈
-};
-
 const goToDetail = (slug: string) => {
+  uni.vibrateShort()
   uni.navigateTo({
     url: `/pages/article/detail?slug=${slug}`
   });

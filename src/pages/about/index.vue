@@ -4,11 +4,11 @@
 
     <!-- 自定义托管的头部：使用 UnoCSS 实现毛玻璃、暗黑模式适配 (dark:) 与过渡动画 -->
     <view
-      class="fixed top-0 inset-x-0 z-[99] bg-white/15 backdrop-blur-[12px] border-b-[1rpx] border-solid border-black/5 transition-colors duration-300 ease-in-out dark:bg-[#1e1e1e]/85 dark:border-white/5"
-      :style="{ paddingTop: statusBarHeight + 'px' }">
-      <!-- 内容区：微信标准 44px 胶囊栏高度对齐 -->
+      class="fixed top-0 inset-x-0 z-[99] backdrop-blur-[12px] border-b-[1rpx] border-solid transition-colors duration-300 ease-in-out"
+      :style="{ paddingTop: statusBarHeight + 'px', backgroundColor: isDark ? 'rgba(30,30,30,0.85)' : 'rgba(255,255,255,0.15)', borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }">
       <view class="h-[44px] flex items-center px-[32rpx]">
-        <text class="text-[32rpx] font-bold text-[#1a1a1a] transition-colors duration-300 dark:text-[#f5f5f5]">
+        <text class="text-[32rpx] font-bold transition-colors duration-300"
+          :style="{ color: isDark ? '#f5f5f5' : '#1a1a1a' }">
           About | 关于
         </text>
       </view>
@@ -25,9 +25,11 @@
 <script setup>
 import { ref } from 'vue'
 import ArticleDetail from '../article/detail.vue'
+import { useTheme } from '@/composables/useTheme'
 
-// 动态获取当前设备的状态栏高度，适配刘海屏和灵动岛
-const systemInfo = uni.getSystemInfoSync()
+const { isDark } = useTheme()
+
+const systemInfo = uni.getWindowInfo ? uni.getWindowInfo() : uni.getSystemInfoSync()
 const statusBarHeight = ref(systemInfo.statusBarHeight || 0)
 </script>
 

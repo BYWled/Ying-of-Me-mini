@@ -3,7 +3,7 @@
     class="relative w-full min-h-screen overflow-hidden bg-[#e6f2f0] dark:bg-[#121212] transition-colors duration-700">
     <!-- 固定视差背景 -->
     <image class="fixed top-0 left-0 w-full h-full object-cover z-0 transition-opacity duration-700 ease-in-out"
-      :src="isDarkMode ? 'https://www.wled.top/images/wallhaven-wqery6-dark.webp' : 'https://www.wled.top/images/wallhaven-wqery6-light.webp'"
+      :src="isDark ? 'https://www.wled.top/images/wallhaven-wqery6-dark.webp' : 'https://www.wled.top/images/wallhaven-wqery6-light.webp'"
       mode="aspectFill" />
 
     <!-- 自定义沉浸式导航栏 -->
@@ -63,9 +63,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useTheme } from '@/composables/useTheme';
 
 // ========== 系统与主题状态 ==========
-const isDarkMode = ref(false);
+const { isDark } = useTheme();
 const navBarHeight = ref(80);
 
 // ========== 数据配置层 ==========
@@ -122,7 +123,6 @@ onMounted(() => {
  */
 const initSystemInfo = () => {
   let statusBarHeight = 20;
-  let theme = 'light';
 
   // 1. 获取状态栏高度 (优先使用最新分立式接口 uni.getWindowInfo)
   if (typeof uni.getWindowInfo === 'function') {
@@ -135,28 +135,11 @@ const initSystemInfo = () => {
     statusBarHeight = fallbackGetStatusBarHeight();
   }
 
-  // 2. 获取当前系统主题色 (优先使用最新分立式接口 uni.getAppBaseInfo)
-  if (typeof uni.getAppBaseInfo === 'function') {
-    try {
-      theme = uni.getAppBaseInfo().theme || 'light';
-    } catch (e) {
-      theme = fallbackGetTheme();
-    }
-  } else {
-    theme = fallbackGetTheme();
-  }
-
-  // 监听主题发生变化
-  isDarkMode.value = theme === 'dark';
-  uni.onThemeChange((res) => {
-    isDarkMode.value = res.theme === 'dark';
-  });
-
-  // 3. 针对微信小程序获取胶囊位置以防遮挡
+  // 2. 针对微信小程序获取胶囊位置以防遮挡
   // #ifdef MP-WEIXIN
   try {
     const menuButtonInfo = uni.getMenuButtonBoundingClientRect();
-    navBarHeight.value = menuButtonInfo.bottom + 8; // 胶囊底部 + 内边距 padding
+    navBarHeight.value = menuButtonInfo.bottom + 8;
   } catch (e) {
     navBarHeight.value = statusBarHeight + 44;
   }
@@ -176,21 +159,13 @@ const fallbackGetStatusBarHeight = (): number => {
   }
 };
 
-// 主题安全降级方法
-const fallbackGetTheme = (): string => {
-  try {
-    return uni.getSystemInfoSync().theme || 'light';
-  } catch (e) {
-    return 'light';
-  }
-};
-
 // ========== 交互与事件 ==========
 const handleIconError = (index: number) => {
   hubItems.value[index].iconError = true;
 };
 
 const navigateToDetail = (slug: string) => {
+  uni.vibrateShort()
   uni.navigateTo({
     url: `/pages/article/detail?type=page&slug=${slug}`
   });

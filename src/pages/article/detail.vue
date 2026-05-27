@@ -129,7 +129,7 @@
                 <!-- 主控制按钮 (Setting / Close) -->
                 <view class="tool-btn shadow-md"
                     :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.95)', borderColor: isDark ? '#444444' : '#e5e7eb' }"
-                    @click="isFabExpanded = !isFabExpanded">
+                    @click="toggleFabExpanded">
                     <image :src="isFabExpanded ? '/static/article/close.png' : '/static/article/setting.png'"
                         class="w-[46rpx] h-[46rpx] transition-transform duration-300"
                         :class="[isFabExpanded ? 'rotate-90' : 'rotate-0']" mode="aspectFit" />
@@ -167,11 +167,12 @@
     </view>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { onLoad, onPageScroll } from '@dcloudio/uni-app'
 import mpHtml from 'mp-html/dist/uni-app/components/mp-html/mp-html.vue'
 import { blogApi } from '@/api/posts'
 import type { ArticleDetail } from '@/api/types'
+import { useTheme } from '@/composables/useTheme'
 
 const props = defineProps({
     isEmbed: {
@@ -195,7 +196,7 @@ const props = defineProps({
 // --- 状态与环境变量 ---
 const article = ref<ArticleDetail | null>(null)
 const isLoading = ref(true)
-const isDark = ref(false)
+const { isDark, toggleTheme } = useTheme()
 const showToc = ref(false)
 const tocList = ref<{ level: number, id: string, text: string }[]>([])
 const processedContent = ref('')
@@ -217,8 +218,14 @@ const isFabOnLeft = ref(false)
 const isFabExpanded = ref(false) // 控制悬浮菜单展开收起
 let fabTouchStartX = 0
 
+const toggleFabExpanded = () => {
+    uni.vibrateShort()
+    isFabExpanded.value = !isFabExpanded.value
+}
+
 // 处理悬浮菜单动作并自动收起
 const handleFabAction = (action: Function) => {
+    uni.vibrateShort()
     action()
     isFabExpanded.value = false
 }
@@ -375,6 +382,18 @@ const processHexoContent = (html: string, isDark: boolean) => {
         return `<img${newAttrs}>`;
     });
 
+    // Convert external links to internal redirect to prevent mp-html navigation
+    res = res.replace(/<a\s([^>]*?)href="([^"]*)"([^>]*)>/gi, (_match, before, href, after) => {
+        if (!href || href.startsWith('#') || href.startsWith('/') || href.startsWith('./') || href.startsWith('../')) {
+            return _match
+        }
+        if (/^(?:https?:\/\/)?(?:www\.|mirror\.)?wled\.top/i.test(href)) {
+            return _match
+        }
+        const encoded = encodeURIComponent(href)
+        return `<a ${before}href="https://www.wled.top/___ext___?url=${encoded}"${after}>`
+    })
+
     return res;
 }
 
@@ -494,29 +513,28 @@ const formatDate = (dateStr: string) => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-const toggleTheme = () => {
-    isDark.value = !isDark.value
+watch(isDark, () => {
     if (article.value) {
         const cleanContent = processHexoContent(article.value.content, isDark.value)
         processedContent.value = getHighlightCss(isDark.value) + cleanContent
     }
-
-    // 附加优化：动态修改微信小程序的原生页面背景色
-    const bgColor = isDark.value ? '#121212' : '#f0f2f5'
-
-    // 增加跨端兼容性判断：只有在当前环境支持该 API（如微信小程序）时才调用，H5 环境下安全忽略
     if (typeof uni.setBackgroundColor === 'function') {
+        const bgColor = isDark.value ? '#121212' : '#f0f2f5'
         uni.setBackgroundColor({
             backgroundColor: bgColor,
             backgroundColorBottom: bgColor,
             backgroundColorTop: bgColor
-        }).catch(() => { }) // 捕获个别低版本基础库可能发生的 Promise 异常
+        }).catch(() => { })
     }
+})
+
+const scrollToTop = () => {
+    uni.vibrateShort()
+    uni.pageScrollTo({ scrollTop: 0, duration: 300 })
 }
 
-const scrollToTop = () => uni.pageScrollTo({ scrollTop: 0, duration: 300 })
-
 const goBack = () => {
+    uni.vibrateShort()
     const pages = getCurrentPages()
     if (pages.length === 1) {
         uni.switchTab({ url: '/pages/index/index' })
@@ -537,6 +555,7 @@ const extractTOC = (html: string) => {
 }
 
 const jumpToAnchor = (id: string) => {
+    uni.vibrateShort()
     showToc.value = false
     if (articleHtml.value) {
         articleHtml.value.navigateTo(id, -navBarHeight.value - 12)
@@ -604,7 +623,20 @@ const handleLinkTap = (e: any) => {
 
 // 提取内部路由处理逻辑，统一逻辑入口
 const handleInternalPath = (pathname: string) => {
-    // 核心修复：彻底剔除降级传入的 hash（#）和 query（?），防止污染 slug 导致 API 请求截断 404
+    if (pathname.includes('/___ext___')) {
+        const match = pathname.match(/[?&]url=([^&]+)/)
+        if (match) {
+            try {
+                const extUrl = decodeURIComponent(match[1])
+                uni.setClipboardData({
+                    data: extUrl,
+                    success: () => uni.showToast({ title: '外链已复制', icon: 'none' })
+                })
+            } catch (_e) { /* ignore */ }
+        }
+        return
+    }
+
     pathname = pathname.split('#')[0].split('?')[0];
 
     if (pathname === '/' || pathname === '') {
