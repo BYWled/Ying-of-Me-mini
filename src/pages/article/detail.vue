@@ -3,8 +3,8 @@
         :class="['relative min-h-screen pb-[120rpx] transition-colors duration-500 overflow-x-hidden max-w-[100vw]', isDark ? 'bg-[#121212]' : 'bg-[#f0f2f5]']">
 
         <!-- 顶部浮顶 Header (吸顶 + 进度条) -->
-        <view class="fixed top-0 left-0 w-full z-50 pointer-events-none"
-            :style="{ paddingTop: statusBarHeight + 'px' }">
+        <view class="fixed top-0 left-0 w-full z-50 pointer-events-none" :style="{ paddingTop: statusBarHeight + 'px' }"
+            v-if="!hideHeader">
 
             <view class="absolute inset-0 transition-opacity duration-300"
                 :class="isScrolled ? (isDark ? 'bg-[#1e1e1e]/95 backdrop-blur-md shadow-md opacity-100' : 'bg-white/95 backdrop-blur-md shadow-sm opacity-100') : 'opacity-0'">
@@ -12,7 +12,7 @@
 
             <view
                 class="relative h-[44px] flex items-center px-[32rpx] max-w-[75%] pointer-events-auto box-border w-full">
-                <view
+                <view v-if="!isEmbedMode"
                     class="p-[12rpx] -ml-[12rpx] active:scale-90 transition-all duration-300 rounded-full flex items-center justify-center"
                     :class="!isScrolled ? 'bg-black/30 backdrop-blur-sm' : ''" @click="goBack">
                     <image src="/static/article/back.png" class="w-[36rpx] h-[36rpx] transition-all duration-300"
@@ -69,7 +69,7 @@
                                 :class="isDark ? 'bg-[#42b983]/20' : 'bg-[#42b983]/10'">
                                 <text class="text-[22rpx] line-clamp-1 text-[#42b983] font-bold">{{
                                     article.categories[0].name
-                                }}</text>
+                                    }}</text>
                             </view>
                         </view>
                         <view class="flex items-center gap-[12rpx]">
@@ -145,11 +145,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { onLoad, onPageScroll } from '@dcloudio/uni-app'
 import mpHtml from 'mp-html/dist/uni-app/components/mp-html/mp-html.vue'
 import { blogApi } from '@/api/posts'
 import type { ArticleDetail } from '@/api/types'
+
+const props = defineProps({
+    isEmbed: {
+        type: Boolean,
+        default: false
+    },
+    slug: {
+        type: String,
+        default: ''
+    },
+    isPageType: {
+        type: Boolean,
+        default: false
+    },
+    hideHeader: {
+        type: Boolean,
+        default: false
+    }
+})
 
 // --- 状态与环境变量 ---
 const article = ref<ArticleDetail | null>(null)
@@ -168,6 +187,18 @@ const statusBarHeight = ref(systemInfo.statusBarHeight || 20)
 const navBarHeight = computed(() => statusBarHeight.value + 44)
 const isScrolled = computed(() => scrollTop.value > 250)
 const articleHtml = ref()
+
+const isEmbedMode = computed(() => props.isEmbed)
+
+const pageMap: Record<string, string> = {
+    'about': 'about-----',
+    'sale': '----steam--------',
+    'dozer-esports': '----dozer-esports--',
+    'novel': '-----------',
+    'ying-of-mc': 'ying-of-mc',
+    'tags': 'tags',
+    'categories': 'categories'
+};
 
 const sanitizeId = (id: string) => {
     let decoded = id;
@@ -323,15 +354,14 @@ const markdownStylesDark = {
 }
 
 // --- 逻辑与生命周期 ---
-onLoad(async (options) => {
-    const slug = options?.slug
-    const type = options?.type
+const loadArticle = async (slug: string, isPage: boolean) => {
     if (!slug) {
         isLoading.value = false
         return
     }
+    isLoading.value = true
     try {
-        const res = type === 'page'
+        const res = isPage
             ? await blogApi.getIsolatedPageDetail(slug)
             : await blogApi.getArticleDetail(slug)
 
@@ -343,6 +373,26 @@ onLoad(async (options) => {
         console.error('获取详情失败:', error)
     } finally {
         isLoading.value = false
+    }
+}
+
+onLoad((options) => {
+    if (props.isEmbed) return
+    const slug = options?.slug as string
+    const isPage = options?.type === 'page'
+    if (slug) {
+        loadArticle(slug, isPage)
+    } else {
+        isLoading.value = false
+    }
+})
+
+onMounted(() => {
+    if (!props.isEmbed) return
+    const targetSlug = pageMap[props.slug] || props.slug
+    const isPage = props.isPageType
+    if (!article.value) {
+        loadArticle(targetSlug, isPage)
     }
 })
 
@@ -488,15 +538,7 @@ const handleInternalPath = (pathname: string) => {
     }
 
     const parts = pathname.split('/').filter(Boolean);
-    const pageMap: Record<string, string> = {
-        'about': 'about-----',
-        'sale': '----steam--------',
-        'dozer-esports': '----dozer-esports--',
-        'novel': '-----------',
-        'ying-of-mc': 'ying-of-mc',
-        'tags': 'tags',
-        'categories': 'categories'
-    };
+
 
     const firstPath = parts[0]?.toLowerCase();
     let slug = parts[parts.length - 1]?.toLowerCase() || '';
