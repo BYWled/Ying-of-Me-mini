@@ -92,7 +92,7 @@
           <view class="flex flex-col items-center">
             <!-- 统计文章图标 -->
             <image class="w-[38rpx] h-[38rpx] mb-1.5" src="/static/home/posts.png" mode="aspectFit" />
-            <text class="text-[32rpx] font-bold text-[#42b983]">13</text>
+            <text class="text-[32rpx] font-bold text-[#42b983]">{{ siteStats.posts }}</text>
             <text class="text-[20rpx]" :class="isDark ? 'text-gray-400' : 'text-gray-500'">文章</text>
           </view>
 
@@ -100,14 +100,14 @@
             :class="isDark ? 'border-[rgba(255,255,255,0.1)]' : 'border-[rgba(229,231,235,0.5)]'">
             <!-- 分类图标 -->
             <image class="w-[38rpx] h-[38rpx] mb-1.5" src="/static/home/categories.png" mode="aspectFit" />
-            <text class="text-[32rpx] font-bold text-[#42b983]">4</text>
+            <text class="text-[32rpx] font-bold text-[#42b983]">{{ siteStats.categories }}</text>
             <text class="text-[20rpx]" :class="isDark ? 'text-gray-400' : 'text-gray-500'">分类</text>
           </view>
 
           <view class="flex flex-col items-center">
             <!-- 标签图标 -->
             <image class="w-[38rpx] h-[38rpx] mb-1.5" src="/static/home/tags.png" mode="aspectFit" />
-            <text class="text-[32rpx] font-bold text-[#42b983]">3</text>
+            <text class="text-[32rpx] font-bold text-[#42b983]">{{ siteStats.tags }}</text>
             <text class="text-[20rpx]" :class="isDark ? 'text-gray-400' : 'text-gray-500'">标签</text>
           </view>
         </view>
@@ -223,6 +223,7 @@
 import { ref, computed } from 'vue';
 import { onLoad, onPullDownRefresh, onReachBottom, onPageScroll } from '@dcloudio/uni-app';
 import { blogApi } from '@/api/posts';
+import { BASE_URL } from '@/api/config'; // 引入 BASE_URL 以尊重反代配置
 import type { SiteInfo, PostListItem } from '@/api/types';
 
 // 1. 系统适配相关
@@ -249,6 +250,13 @@ const currentPage = ref(1);
 const totalPage = ref(1);
 const isLoading = ref(false);
 const isInitialLoading = ref(true); // 新增首屏加载状态管控
+
+// 动态统计数据响应式对象
+const siteStats = ref({
+  posts: 0,
+  categories: 0,
+  tags: 0
+});
 
 // 5. 辅助方法：多媒体绝对路径补全
 const resolveMediaUrl = (path: string | null | undefined) => {
@@ -312,11 +320,38 @@ const fetchArticlesList = async (page: number, append = false) => {
     }
     currentPage.value = page;
     totalPage.value = res.pageCount || 1;
+
+    // 初始化时提取并赋值文章总数
+    if (page === 1) {
+      siteStats.value.posts = res.total || 0;
+    }
   } catch (err) {
     console.error(`请求第 ${page} 页文章流出错:`, err);
   } finally {
     isLoading.value = false;
   }
+};
+
+// 获取分类与标签的统计数据 (复用 API 根路径和反代配置)
+const fetchTaxonomyStats = () => {
+  // 请求分类总数
+  uni.request({
+    url: `${BASE_URL}/categories.json`,
+    success: (res: any) => {
+      if (res.statusCode === 200 && Array.isArray(res.data)) {
+        siteStats.value.categories = res.data.length;
+      }
+    }
+  });
+  // 请求标签总数
+  uni.request({
+    url: `${BASE_URL}/tags.json`,
+    success: (res: any) => {
+      if (res.statusCode === 200 && Array.isArray(res.data)) {
+        siteStats.value.tags = res.data.length;
+      }
+    }
+  });
 };
 
 // 8. 生命周期钩子
@@ -339,6 +374,10 @@ onLoad(() => {
   // 渲染基础数据 (加入并发等待和加载状态管控)
   const initData = async () => {
     isInitialLoading.value = true;
+
+    // 触发分类和标签数据的加载 (异步，不阻塞核心首屏文章渲染)
+    fetchTaxonomyStats();
+
     // 并发请求站点信息和首屏文章
     await Promise.all([
       fetchSiteMeta(),
