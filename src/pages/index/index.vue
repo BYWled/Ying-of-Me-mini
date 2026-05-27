@@ -200,6 +200,22 @@
       </view>
 
     </view>
+
+    <!-- 6. 首屏全局高透加载遮罩 (完美防止兜底信息闪屏) -->
+    <view
+      class="fixed inset-0 z-[100] flex flex-col items-center justify-center transition-opacity duration-1000 backdrop-blur-2xl"
+      :class="[
+        isInitialLoading ? 'opacity-100' : 'opacity-0 pointer-events-none',
+        isDark ? 'bg-[rgba(18,18,20,0.85)]' : 'bg-[rgba(244,247,246,0.85)]'
+      ]">
+      <view
+        class="w-[80rpx] h-[80rpx] rounded-full border-[6rpx] border-[#42b983]/30 border-t-[#42b983] animate-spin mb-6">
+      </view>
+      <text class="text-[26rpx] tracking-[0.2em] font-light animate-pulse"
+        :class="isDark ? 'text-[rgba(255,255,255,0.7)]' : 'text-[rgba(0,0,0,0.5)]'">
+        CONNECTING...
+      </text>
+    </view>
   </view>
 </template>
 
@@ -232,6 +248,7 @@ const postList = ref<PostListItem[]>([]);
 const currentPage = ref(1);
 const totalPage = ref(1);
 const isLoading = ref(false);
+const isInitialLoading = ref(true); // 新增首屏加载状态管控
 
 // 5. 辅助方法：多媒体绝对路径补全
 const resolveMediaUrl = (path: string | null | undefined) => {
@@ -319,9 +336,21 @@ onLoad(() => {
   navBarHeight.value = statusBarHeight.value + 44;
   // #endif
 
-  // 渲染基础数据
-  fetchSiteMeta();
-  fetchArticlesList(1);
+  // 渲染基础数据 (加入并发等待和加载状态管控)
+  const initData = async () => {
+    isInitialLoading.value = true;
+    // 并发请求站点信息和首屏文章
+    await Promise.all([
+      fetchSiteMeta(),
+      fetchArticlesList(1)
+    ]);
+    // 增加 600ms 延迟，让数据渲染和封面图有一定的缓冲预载时间，实现绝美的淡出过渡
+    setTimeout(() => {
+      isInitialLoading.value = false;
+    }, 600);
+  };
+
+  initData();
 });
 
 // 9. 用户动作监听
