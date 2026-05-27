@@ -1,6 +1,6 @@
 <template>
     <!-- 修复点：彻底改用内联 :style 注入动态色彩，完美避开 UnoCSS 引擎在小程序端的按需编译漏洞 -->
-    <view class="relative min-h-screen pb-[120rpx] transition-colors duration-500 overflow-x-hidden max-w-[100vw]"
+    <view class="relative min-h-screen transition-colors duration-500 overflow-x-hidden max-w-[100vw]"
         :style="{ backgroundColor: isDark ? '#121212' : '#f0f2f5' }">
 
         <!-- 顶部浮顶 Header (吸顶 + 进度条) -->
@@ -48,7 +48,7 @@
                 :style="{ background: isDark ? 'linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.6), #121212)' : 'linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.1), #f0f2f5)' }">
             </view>
 
-            <view class="article-container relative z-10 pt-[28vh] pb-[40rpx]">
+            <view class="article-container relative z-10 pt-[28vh] pb-[15rpx]">
 
                 <!-- 文章标题与元数据卡片 -->
                 <view
@@ -98,7 +98,7 @@
             </view>
 
             <!-- 悬浮操作按钮组 -->
-            <view class="fixed bottom-[120rpx] right-[30rpx] flex flex-col gap-[18rpx] z-20">
+            <view class="fixed bottom-[60rpx] right-[30rpx] flex flex-col gap-[18rpx] z-20">
                 <view class="tool-btn"
                     :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.9)', borderColor: isDark ? '#444444' : '#f3f4f6' }"
                     @click="toggleTheme">
@@ -328,6 +328,8 @@ const markdownStyles = {
     h1: 'font-size: 42rpx; font-weight: 800; margin: 50rpx 0 24rpx 0; color: #1f2937;',
     h2: 'font-size: 38rpx; font-weight: 700; margin: 48rpx 0 24rpx 0; color: #1f2937; padding-bottom: 16rpx; border-bottom: 1px solid #f3f4f6;',
     h3: 'font-size: 34rpx; font-weight: 700; margin: 36rpx 0 20rpx 0; color: #374151;',
+    h4: 'font-size: 32rpx; font-weight: 700; margin: 32rpx 0 16rpx 0; color: #374151;',
+    h5: 'font-size: 30rpx; font-weight: 700; margin: 28rpx 0 12rpx 0; color: #374151;',
     p: 'font-size: 30rpx; line-height: 1.8; color: #4b5563; margin-bottom: 32rpx; word-wrap: break-word;',
     blockquote: 'border-left: 8rpx solid #42b983; padding: 24rpx 32rpx; color: #6b7280; background-color: rgba(66, 185, 131, 0.05); border-radius: 8rpx; margin: 32rpx 0; font-size: 28rpx;',
     ul: 'padding-left: 40rpx; margin-bottom: 32rpx; color: #4b5563; font-size: 30rpx; line-height: 1.8;',
@@ -345,6 +347,8 @@ const markdownStylesDark = {
     h1: 'font-size: 42rpx; font-weight: 800; margin: 50rpx 0 24rpx 0; color: #f3f4f6;',
     h2: 'font-size: 38rpx; font-weight: 700; margin: 48rpx 0 24rpx 0; color: #f3f4f6; padding-bottom: 16rpx; border-bottom: 1px solid #333;',
     h3: 'font-size: 34rpx; font-weight: 700; margin: 36rpx 0 20rpx 0; color: #e5e7eb;',
+    h4: 'font-size: 32rpx; font-weight: 700; margin: 32rpx 0 16rpx 0; color: #e5e7eb;',
+    h5: 'font-size: 30rpx; font-weight: 700; margin: 28rpx 0 12rpx 0; color: #e5e7eb;',
     p: 'font-size: 30rpx; line-height: 1.8; color: #9ca3af; margin-bottom: 32rpx; word-wrap: break-word;',
     blockquote: 'border-left: 8rpx solid #42b983; padding: 24rpx 32rpx; color: #9ca3af; background-color: rgba(66, 185, 131, 0.1); border-radius: 8rpx; margin: 32rpx 0; font-size: 28rpx;',
     ul: 'padding-left: 40rpx; margin-bottom: 32rpx; color: #9ca3af; font-size: 30rpx; line-height: 1.8;',
