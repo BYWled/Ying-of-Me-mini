@@ -97,25 +97,41 @@
                 </view>
             </view>
 
-            <!-- 悬浮操作按钮组 -->
-            <view class="fixed bottom-[60rpx] right-[30rpx] flex flex-col gap-[18rpx] z-20">
-                <view class="tool-btn"
-                    :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.9)', borderColor: isDark ? '#444444' : '#f3f4f6' }"
-                    @click="toggleTheme">
-                    <image :src="isDark ? '/static/article/theme-dark.png' : '/static/article/theme-light.png'"
-                        class="w-[30rpx] h-[30rpx] opacity-80" mode="aspectFit" />
+            <!-- 悬浮操作按钮组 (绑定手势事件，并使用动态 left 计算实现左右平滑停靠) -->
+            <view class="fixed bottom-[72rpx] flex flex-col items-center z-40"
+                :style="{ left: isFabOnLeft ? '32rpx' : 'calc(100vw - 88rpx - 32rpx)', transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }"
+                @touchstart="onFabTouchStart" @touchend="onFabTouchEnd">
+                
+                <!-- 展开的工具列表 (使用缩放、透明度和位移构成优雅弹出动画) -->
+                <view class="absolute bottom-full mb-[24rpx] flex flex-col gap-[24rpx] transition-all duration-300 origin-bottom"
+                      :class="isFabExpanded ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto' : 'opacity-0 scale-75 translate-y-[40rpx] pointer-events-none'">
+                    <view class="tool-btn"
+                        :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.9)', borderColor: isDark ? '#444444' : '#f3f4f6' }"
+                        @click="handleFabAction(toggleTheme)">
+                        <image :src="isDark ? '/static/article/theme-dark.png' : '/static/article/theme-light.png'"
+                            class="w-[46rpx] h-[46rpx] opacity-80" mode="aspectFit" />
+                    </view>
+                    <view class="tool-btn"
+                        :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.9)', borderColor: isDark ? '#444444' : '#f3f4f6' }"
+                        @click="handleFabAction(() => showToc = true)" v-if="tocList.length > 0">
+                        <image src="/static/article/toc.png" class="w-[46rpx] h-[46rpx] opacity-80"
+                            :class="isDark ? 'invert' : ''" mode="aspectFit" />
+                    </view>
+                    <view class="tool-btn"
+                        :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.9)', borderColor: isDark ? '#444444' : '#f3f4f6' }"
+                        @click="handleFabAction(scrollToTop)">
+                        <image src="/static/article/top.png" class="w-[46rpx] h-[46rpx] opacity-80"
+                            :class="isDark ? 'invert' : ''" mode="aspectFit" />
+                    </view>
                 </view>
-                <view class="tool-btn"
-                    :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.9)', borderColor: isDark ? '#444444' : '#f3f4f6' }"
-                    @click="showToc = true" v-if="tocList.length > 0">
-                    <image src="/static/article/toc.png" class="w-[30rpx] h-[30rpx] opacity-80"
-                        :class="isDark ? 'invert' : ''" mode="aspectFit" />
-                </view>
-                <view class="tool-btn"
-                    :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.9)', borderColor: isDark ? '#444444' : '#f3f4f6' }"
-                    @click="scrollToTop">
-                    <image src="/static/article/top.png" class="w-[30rpx] h-[30rpx] opacity-80"
-                        :class="isDark ? 'invert' : ''" mode="aspectFit" />
+
+                <!-- 主控制按钮 (Setting / Close) -->
+                <view class="tool-btn shadow-md"
+                    :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.95)', borderColor: isDark ? '#444444' : '#e5e7eb' }"
+                    @click="isFabExpanded = !isFabExpanded">
+                    <image :src="isFabExpanded ? '/static/article/close.png' : '/static/article/setting.png'"
+                        class="w-[46rpx] h-[46rpx] transition-transform duration-300"
+                        :class="[isFabExpanded ? 'rotate-90' : 'rotate-0']" mode="aspectFit" />
                 </view>
             </view>
 
@@ -194,6 +210,43 @@ const isScrolled = computed(() => scrollTop.value > 250)
 const articleHtml = ref()
 
 const isEmbedMode = computed(() => props.isEmbed)
+
+// --- 悬浮按钮手势与折叠状态相关 ---
+const isFabOnLeft = ref(false)
+const isFabExpanded = ref(false) // 控制悬浮菜单展开收起
+let fabTouchStartX = 0
+
+// 处理悬浮菜单动作并自动收起
+const handleFabAction = (action: Function) => {
+    action()
+    isFabExpanded.value = false
+}
+
+// 记录触摸起始位置
+const onFabTouchStart = (e: any) => {
+    if (e.changedTouches && e.changedTouches.length > 0) {
+        fabTouchStartX = e.changedTouches[0].clientX
+    }
+}
+
+// 触摸结束时判断偏移量
+const onFabTouchEnd = (e: any) => {
+    if (e.changedTouches && e.changedTouches.length > 0) {
+        const touchEndX = e.changedTouches[0].clientX
+        const diffX = touchEndX - fabTouchStartX
+
+        // 设定触发滑动的阈值，防止误触 (40px)
+        if (diffX > 40) {
+            // 向右滑动，回到右侧停靠
+            isFabOnLeft.value = false
+            isFabExpanded.value = false // 滑动时同时收起菜单
+        } else if (diffX < -40) {
+            // 向左滑动，停靠在左侧
+            isFabOnLeft.value = true
+            isFabExpanded.value = false // 滑动时同时收起菜单
+        }
+    }
+}
 
 const pageMap: Record<string, string> = {
     'about': 'about-----',
@@ -582,8 +635,8 @@ const handleInternalPath = (pathname: string) => {
 }
 
 .tool-btn {
-    width: 66rpx;
-    height: 66rpx;
+    width: 88rpx;
+    height: 88rpx;
     border-radius: 50%;
     backdrop-filter: blur(12px);
     box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
