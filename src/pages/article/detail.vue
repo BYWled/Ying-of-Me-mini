@@ -1,26 +1,30 @@
 <template>
-    <view
-        :class="['relative min-h-screen pb-[120rpx] transition-colors duration-500 overflow-x-hidden max-w-[100vw]', isDark ? 'bg-[#121212]' : 'bg-[#f0f2f5]']">
+    <!-- 修复点：彻底改用内联 :style 注入动态色彩，完美避开 UnoCSS 引擎在小程序端的按需编译漏洞 -->
+    <view class="relative min-h-screen pb-[120rpx] transition-colors duration-500 overflow-x-hidden max-w-[100vw]"
+        :style="{ backgroundColor: isDark ? '#121212' : '#f0f2f5' }">
 
         <!-- 顶部浮顶 Header (吸顶 + 进度条) -->
         <view class="fixed top-0 left-0 w-full z-50 pointer-events-none" :style="{ paddingTop: statusBarHeight + 'px' }"
             v-if="!hideHeader">
 
             <view class="absolute inset-0 transition-opacity duration-300"
-                :class="isScrolled ? (isDark ? 'bg-[#1e1e1e]/95 backdrop-blur-md shadow-md opacity-100' : 'bg-white/95 backdrop-blur-md shadow-sm opacity-100') : 'opacity-0'">
+                :class="isScrolled ? 'backdrop-blur-md shadow-md opacity-100' : 'opacity-0'"
+                :style="{ backgroundColor: isScrolled ? (isDark ? 'rgba(30,30,30,0.95)' : 'rgba(255,255,255,0.95)') : 'transparent' }">
             </view>
 
             <view
                 class="relative h-[44px] flex items-center px-[32rpx] max-w-[75%] pointer-events-auto box-border w-full">
                 <view v-if="!isEmbedMode"
                     class="p-[12rpx] -ml-[12rpx] active:scale-90 transition-all duration-300 rounded-full flex items-center justify-center"
-                    :class="!isScrolled ? 'bg-black/30 backdrop-blur-sm' : ''" @click="goBack">
+                    :style="{ backgroundColor: !isScrolled ? 'rgba(0,0,0,0.3)' : 'transparent', backdropFilter: !isScrolled ? 'blur(4px)' : 'none' }"
+                    @click="goBack">
                     <image src="/static/article/back.png" class="w-[36rpx] h-[36rpx] transition-all duration-300"
                         :class="[!isScrolled || isDark ? 'invert opacity-90' : 'opacity-70']" mode="aspectFit" />
                 </view>
                 <text
                     class="text-[30rpx] font-bold ml-[20rpx] flex-1 mb-[8rpx] truncate transition-opacity duration-300"
-                    :class="[isDark ? 'text-gray-200' : 'text-gray-800', isScrolled ? 'opacity-100' : 'opacity-0']">
+                    :class="isScrolled ? 'opacity-100' : 'opacity-0'"
+                    :style="{ color: isDark ? '#e5e7eb' : '#1f2937' }">
                     {{ article?.title || '加载中...' }}
                 </text>
             </view>
@@ -34,24 +38,24 @@
             <view
                 class="w-[80rpx] h-[80rpx] border-4 border-[#42b983] border-t-transparent rounded-full animate-spin mb-4">
             </view>
-            <text class="text-[26rpx]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">正在从时间裂缝中抽取文章...</text>
+            <text class="text-[26rpx]" :style="{ color: isDark ? '#6b7280' : '#9ca3af' }">正在从时间裂缝中抽取文章...</text>
         </view>
 
         <!-- 正式内容区 -->
         <block v-else-if="article">
             <image class="absolute top-0 left-0 w-full h-[45vh] object-cover z-0" :src="coverUrl" mode="aspectFill" />
             <view class="absolute top-0 left-0 w-full h-[45vh] z-0"
-                :class="isDark ? 'bg-gradient-to-b from-black/40 via-black/60 to-[#121212]' : 'bg-gradient-to-b from-black/20 via-black/10 to-[#f0f2f5]'">
+                :style="{ background: isDark ? 'linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.6), #121212)' : 'linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.1), #f0f2f5)' }">
             </view>
 
             <view class="article-container relative z-10 pt-[28vh] pb-[40rpx]">
 
                 <!-- 文章标题与元数据卡片 -->
                 <view
-                    class="backdrop-blur-xl rounded-[32rpx] m-[32rpx] p-[40rpx] shadow-sm transition-colors duration-500 box-border"
-                    :class="isDark ? 'bg-[#1e1e1e]/85 border border-[#333]' : 'bg-white/85 border border-white/60'">
+                    class="backdrop-blur-xl rounded-[32rpx] m-[32rpx] p-[40rpx] shadow-sm transition-colors duration-500 box-border border"
+                    :style="{ backgroundColor: isDark ? 'rgba(30,30,30,0.85)' : 'rgba(255,255,255,0.85)', borderColor: isDark ? '#333333' : 'rgba(255,255,255,0.6)' }">
                     <text class="text-[44rpx] font-bold leading-snug block mb-[24rpx]"
-                        :class="isDark ? 'text-gray-100' : 'text-gray-800'">
+                        :style="{ color: isDark ? '#f3f4f6' : '#1f2937' }">
                         {{ article.title }}
                     </text>
 
@@ -59,25 +63,24 @@
                         <view class="flex items-center mr-[32rpx]" v-if="article.date">
                             <image src="/static/home/calendar.png" class="w-[28rpx] h-[28rpx] mr-[12rpx] opacity-60"
                                 :class="isDark ? 'invert' : ''" mode="aspectFit" />
-                            <text class="text-[24rpx] font-medium"
-                                :class="isDark ? 'text-gray-400' : 'text-gray-500'">{{ formatDate(article.date)
+                            <text class="text-[24rpx] font-medium" :style="{ color: isDark ? '#9ca3af' : '#6b7280' }">{{
+                                formatDate(article.date)
                                 }}</text>
                         </view>
                         <view v-if="article.categories && article.categories.length"
                             class="flex items-center mr-[24rpx]">
                             <view class="px-[16rpx] py-[4rpx] rounded-full border border-[#42b983]/30"
-                                :class="isDark ? 'bg-[#42b983]/20' : 'bg-[#42b983]/10'">
+                                :style="{ backgroundColor: isDark ? 'rgba(66,185,131,0.2)' : 'rgba(66,185,131,0.1)' }">
                                 <text class="text-[22rpx] line-clamp-1 text-[#42b983] font-bold">{{
                                     article.categories[0].name
-                                    }}</text>
+                                }}</text>
                             </view>
                         </view>
                         <view class="flex items-center gap-[12rpx]">
                             <view v-for="(tag, index) in article.tags" :key="index"
                                 class="px-[12rpx] py-[2rpx] rounded-[8rpx]"
-                                :class="isDark ? 'bg-[#2a2a2a]' : 'bg-gray-100'">
-                                <text class="text-[22rpx] line-clamp-1"
-                                    :class="isDark ? 'text-gray-400' : 'text-gray-400'"># {{ tag.name }}</text>
+                                :style="{ backgroundColor: isDark ? '#2a2a2a' : '#f3f4f6' }">
+                                <text class="text-[22rpx] line-clamp-1 text-gray-400"># {{ tag.name }}</text>
                             </view>
                         </view>
                     </view>
@@ -85,8 +88,8 @@
 
                 <!-- 富文本正文卡片 -->
                 <view
-                    class="rounded-[32rpx] p-[32rpx] pt-[12rpx] bg-white shadow-sm transition-colors duration-500 overflow-hidden box-border w-full"
-                    :class="isDark ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white/95 border border-white/60'">
+                    class="rounded-[32rpx] p-[32rpx] pt-[12rpx] shadow-sm transition-colors duration-500 overflow-hidden box-border w-full border"
+                    :style="{ backgroundColor: isDark ? '#1e1e1e' : 'rgba(255,255,255,0.95)', borderColor: isDark ? '#333333' : 'rgba(255,255,255,0.6)' }">
                     <mp-html ref="articleHtml" :key="isDark ? 'dark' : 'light'" :content="processedContent"
                         :tag-style="isDark ? markdownStylesDark : markdownStyles" domain="https://www.wled.top"
                         :selectable="true" :lazy-load="true" :use-anchor="navBarHeight" @linktap="handleLinkTap"
@@ -96,17 +99,20 @@
 
             <!-- 悬浮操作按钮组 -->
             <view class="fixed bottom-[120rpx] right-[30rpx] flex flex-col gap-[18rpx] z-20">
-                <view class="tool-btn" :class="isDark ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white/90 border-gray-100'"
+                <view class="tool-btn"
+                    :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.9)', borderColor: isDark ? '#444444' : '#f3f4f6' }"
                     @click="toggleTheme">
                     <image :src="isDark ? '/static/article/theme-dark.png' : '/static/article/theme-light.png'"
                         class="w-[30rpx] h-[30rpx] opacity-80" mode="aspectFit" />
                 </view>
-                <view class="tool-btn" :class="isDark ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white/90 border-gray-100'"
+                <view class="tool-btn"
+                    :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.9)', borderColor: isDark ? '#444444' : '#f3f4f6' }"
                     @click="showToc = true" v-if="tocList.length > 0">
                     <image src="/static/article/toc.png" class="w-[30rpx] h-[30rpx] opacity-80"
                         :class="isDark ? 'invert' : ''" mode="aspectFit" />
                 </view>
-                <view class="tool-btn" :class="isDark ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white/90 border-gray-100'"
+                <view class="tool-btn"
+                    :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.9)', borderColor: isDark ? '#444444' : '#f3f4f6' }"
                     @click="scrollToTop">
                     <image src="/static/article/top.png" class="w-[30rpx] h-[30rpx] opacity-80"
                         :class="isDark ? 'invert' : ''" mode="aspectFit" />
@@ -119,11 +125,11 @@
                 <view class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="showToc = false"></view>
                 <view
                     class="absolute bottom-0 left-0 w-full rounded-t-[40rpx] p-[40rpx] flex flex-col transition-transform duration-300 box-border"
-                    :class="[showToc ? 'translate-y-0' : 'translate-y-full', isDark ? 'bg-[#1e1e1e]' : 'bg-white']"
-                    style="max-height: 75vh;">
+                    :class="showToc ? 'translate-y-0' : 'translate-y-full'"
+                    :style="{ backgroundColor: isDark ? '#1e1e1e' : '#ffffff', maxHeight: '75vh' }">
                     <view class="flex justify-between items-center mb-[24rpx]">
                         <text class="text-[36rpx] font-bold"
-                            :class="isDark ? 'text-gray-100' : 'text-gray-800'">文章大纲</text>
+                            :style="{ color: isDark ? '#f3f4f6' : '#1f2937' }">文章大纲</text>
                         <view class="p-[10rpx] active:opacity-50" @click="showToc = false">
                             <text class="text-[28rpx] text-[#42b983]">关闭</text>
                         </view>
@@ -131,10 +137,10 @@
                     <scroll-view scroll-y="true" style="height: 55vh;" class="w-full">
                         <view v-for="(item, index) in tocList" :key="index"
                             class="py-[24rpx] border-b active:opacity-50 transition-opacity"
-                            :class="isDark ? 'border-[#333]' : 'border-gray-100'"
-                            :style="{ paddingLeft: `${(item.level - 1) * 32}rpx` }" @click="jumpToAnchor(item.id)">
+                            :style="{ paddingLeft: `${(item.level - 1) * 32}rpx`, borderColor: isDark ? '#333333' : '#f3f4f6' }"
+                            @click="jumpToAnchor(item.id)">
                             <text class="text-[28rpx] line-clamp-1"
-                                :class="isDark ? 'text-gray-300' : 'text-gray-600'">{{ item.text }}</text>
+                                :style="{ color: isDark ? '#d1d5db' : '#4b5563' }">{{ item.text }}</text>
                         </view>
                         <view class="h-[40rpx]"></view>
                     </scroll-view>
@@ -143,7 +149,6 @@
         </block>
     </view>
 </template>
-
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { onLoad, onPageScroll } from '@dcloudio/uni-app'
@@ -437,6 +442,14 @@ const toggleTheme = () => {
         const cleanContent = processHexoContent(article.value.content, isDark.value)
         processedContent.value = getHighlightCss(isDark.value) + cleanContent
     }
+
+    // 修复点 3：附加优化，动态修改微信小程序的原生页面背景色（防止下拉刷新或触底回弹时露出白底）
+    const bgColor = isDark.value ? '#121212' : '#f0f2f5'
+    uni.setBackgroundColor({
+        backgroundColor: bgColor,
+        backgroundColorBottom: bgColor,
+        backgroundColorTop: bgColor
+    })
 }
 
 const scrollToTop = () => uni.pageScrollTo({ scrollTop: 0, duration: 300 })
