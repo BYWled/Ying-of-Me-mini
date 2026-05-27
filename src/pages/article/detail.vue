@@ -95,20 +95,20 @@
             </view>
 
             <!-- 悬浮操作按钮组 -->
-            <view class="fixed bottom-[60rpx] right-[40rpx] flex flex-col gap-[24rpx] z-40">
+            <view class="fixed bottom-[120rpx] right-[30rpx] flex flex-col gap-[18rpx] z-20">
                 <view class="tool-btn" :class="isDark ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white/90 border-gray-100'"
                     @click="toggleTheme">
                     <image :src="isDark ? '/static/article/theme-dark.png' : '/static/article/theme-light.png'"
-                        class="w-[40rpx] h-[40rpx] opacity-80" mode="aspectFit" />
+                        class="w-[30rpx] h-[30rpx] opacity-80" mode="aspectFit" />
                 </view>
                 <view class="tool-btn" :class="isDark ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white/90 border-gray-100'"
                     @click="showToc = true" v-if="tocList.length > 0">
-                    <image src="/static/article/toc.png" class="w-[40rpx] h-[40rpx] opacity-80"
+                    <image src="/static/article/toc.png" class="w-[30rpx] h-[30rpx] opacity-80"
                         :class="isDark ? 'invert' : ''" mode="aspectFit" />
                 </view>
                 <view class="tool-btn" :class="isDark ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white/90 border-gray-100'"
                     @click="scrollToTop">
-                    <image src="/static/article/top.png" class="w-[40rpx] h-[40rpx] opacity-80"
+                    <image src="/static/article/top.png" class="w-[30rpx] h-[30rpx] opacity-80"
                         :class="isDark ? 'invert' : ''" mode="aspectFit" />
                 </view>
             </view>
@@ -565,8 +565,8 @@ const handleInternalPath = (pathname: string) => {
 }
 
 .tool-btn {
-    width: 88rpx;
-    height: 88rpx;
+    width: 66rpx;
+    height: 66rpx;
     border-radius: 50%;
     backdrop-filter: blur(12px);
     box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
