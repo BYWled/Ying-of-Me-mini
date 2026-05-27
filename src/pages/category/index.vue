@@ -186,7 +186,8 @@ import { blogApi } from '@/api/posts';
 import { BASE_URL } from '@/api/config';
 
 // --- 系统信息适配 ---
-const sysInfo = uni.getSystemInfoSync();
+// 修复 wx.getSystemInfoSync 废弃警告，优先使用新 API 获取窗口信息，向下兼容旧 API
+const sysInfo = uni.getWindowInfo ? uni.getWindowInfo() : uni.getSystemInfoSync();
 const statusBarHeight = ref(sysInfo.statusBarHeight || 20);
 
 // --- 基础数据 ---
