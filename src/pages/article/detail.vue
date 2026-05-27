@@ -69,7 +69,7 @@
                                 :class="isDark ? 'bg-[#42b983]/20' : 'bg-[#42b983]/10'">
                                 <text class="text-[22rpx] line-clamp-1 text-[#42b983] font-bold">{{
                                     article.categories[0].name
-                                    }}</text>
+                                }}</text>
                             </view>
                         </view>
                         <view class="flex items-center gap-[12rpx]">
@@ -479,6 +479,9 @@ const handleLinkTap = (e: any) => {
 
 // 提取内部路由处理逻辑，统一逻辑入口
 const handleInternalPath = (pathname: string) => {
+    // 核心修复：彻底剔除降级传入的 hash（#）和 query（?），防止污染 slug 导致 API 请求截断 404
+    pathname = pathname.split('#')[0].split('?')[0];
+
     if (pathname === '/' || pathname === '') {
         uni.switchTab({ url: '/pages/index/index' });
         return;
