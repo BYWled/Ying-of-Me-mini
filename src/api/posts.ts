@@ -69,4 +69,40 @@ export const blogApi = {
   getIsolatedPageDetail: (slug: string) => {
     return request<ArticleDetail>(BLOG_API_ENDPOINTS_MAP.ISOLATED_PAGE(slug));
   },
+  /**
+   * 获取所有分类列表
+   */
+  getCategoriesList: () => {
+    return request<any[]>(BLOG_API_ENDPOINTS_MAP.CATEGORIES_LIST);
+  },
+
+  /**
+   * 获取所有标签列表
+   */
+  getTagsList: () => {
+    return request<any[]>(BLOG_API_ENDPOINTS_MAP.TAGS_LIST);
+  },
+
+  /**
+   * 获取指定分类详情及文章列表
+   * @param name 分类名称
+   */
+  getCategoryDetail: (name: string) => {
+    return request<any>(BLOG_API_ENDPOINTS_MAP.CATEGORY_DETAIL(name));
+  },
+
+  /**
+   * 获取指定标签详情及文章列表
+   * @param name 标签名称
+   */
+  getTagDetail: (name: string) => {
+    return request<any>(BLOG_API_ENDPOINTS_MAP.TAG_DETAIL(name));
+  },
+
+  /**
+   * 获取全局搜索数据（用于纯前端搜索）
+   */
+  getSearchIndex: () => {
+    return request<any[]>(BLOG_API_ENDPOINTS_MAP.SEARCH_INDEX);
+  },
 };

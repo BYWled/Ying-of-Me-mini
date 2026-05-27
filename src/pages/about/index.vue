@@ -1,12 +1,3 @@
-<script setup>
-import { ref } from 'vue'
-import ArticleDetail from '../article/detail.vue'
-
-// 动态获取当前设备的状态栏高度，适配刘海屏和灵动岛
-const systemInfo = uni.getSystemInfoSync()
-const statusBarHeight = ref(systemInfo.statusBarHeight || 0)
-</script>
-
 <template>
   <!-- 页面容器：防溢出、全屏宽度 -->
   <view class="box-border w-screen overflow-x-hidden">
@@ -30,3 +21,30 @@ const statusBarHeight = ref(systemInfo.statusBarHeight || 0)
     <ArticleDetail :is-embed="true" slug="about" :is-page-type="true" :hide-header="true" />
   </view>
 </template>
+
+<script setup>
+import { ref } from 'vue'
+import ArticleDetail from '../article/detail.vue'
+
+// 动态获取当前设备的状态栏高度，适配刘海屏和灵动岛
+const systemInfo = uni.getSystemInfoSync()
+const statusBarHeight = ref(systemInfo.statusBarHeight || 0)
+</script>
+
+<style>
+/* 隐藏滚动条 */
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  color: transparent;
+}
+
+/* 适配微信小程序的滚动条隐藏 */
+/* #ifdef MP-WEIXIN */
+scroll-view {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* #endif */
+</style>

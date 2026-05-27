@@ -29,6 +29,15 @@ export const BLOG_API_ENDPOINTS_MAP = {
   POSTS_LIST: (page: number) => `/posts/${page}.json`,
   ARTICLE_DETAIL: (slug: string) => `/articles/${slug}.json`,
   ISOLATED_PAGE: (slug: string) => `/pages/${slug}.json`,
+
+  // 新增：分类与标签列表
   CATEGORIES_LIST: "/categories.json",
   TAGS_LIST: "/tags.json",
+
+  // 新增：获取特定分类/标签下的文章列表数据
+  CATEGORY_DETAIL: (name: string) => `/categories/${name}.json`,
+  TAG_DETAIL: (name: string) => `/tags/${name}.json`,
+
+  // 预留：全局搜索索引（需博客生成器配合生成 search.json）
+  SEARCH_INDEX: "/search.json",
 } as const;

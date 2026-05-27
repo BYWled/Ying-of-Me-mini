@@ -205,4 +205,11 @@ const navigateToDetail = (slug: string) => {
   height: 0;
   color: transparent;
 }
+
+/* 适配微信小程序的滚动条隐藏 */
+/* #ifdef MP-WEIXIN */
+scroll-view {
+  -webkit-overflow-scrolling: touch;
+}
+/* #endif */
 </style>
