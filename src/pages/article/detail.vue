@@ -18,7 +18,7 @@
                     class="p-[12rpx] -ml-[12rpx] active:scale-90 transition-all duration-300 rounded-full flex items-center justify-center"
                     :style="{ backgroundColor: !isScrolled ? 'rgba(0,0,0,0.3)' : 'transparent', backdropFilter: !isScrolled ? 'blur(4px)' : 'none' }"
                     @click="goBack">
-                    <image src="/static/article/back.png" class="w-[36rpx] h-[36rpx] transition-all duration-300"
+                    <image src="/static/public/back.png" class="w-[36rpx] h-[36rpx] transition-all duration-300"
                         :class="[!isScrolled || isDark ? 'invert opacity-90' : 'opacity-70']" mode="aspectFit" />
                 </view>
                 <text
@@ -109,7 +109,7 @@
                     <view class="tool-btn"
                         :style="{ backgroundColor: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.9)', borderColor: isDark ? '#444444' : '#f3f4f6' }"
                         @click="handleFabAction(toggleTheme)">
-                        <image :src="isDark ? '/static/article/theme-dark.png' : '/static/article/theme-light.png'"
+                        <image :src="isDark ? '/static/public/theme-dark.png' : '/static/public/theme-light.png'"
                             class="w-[46rpx] h-[46rpx] opacity-80" mode="aspectFit" />
                     </view>
                     <view class="tool-btn"

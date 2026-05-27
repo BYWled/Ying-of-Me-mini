@@ -33,7 +33,7 @@
           ]" @click="toggleTheme">
           <!-- 优先加载本地图片 -->
           <image class="w-[38rpx] h-[38rpx]"
-            :src="isDark ? '/static/home/theme-dark.png' : '/static/home/theme-light.png'" />
+            :src="isDark ? '/static/public/theme-dark.png' : '/static/public/theme-light.png'" />
         </view>
       </view>
     </view>

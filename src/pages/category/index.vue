@@ -91,7 +91,7 @@
           <!-- 左侧返回热区 -->
           <view class="pl-[12rpx] h-full flex items-center justify-center active:opacity-50 transition-opacity"
             @click="resetView">
-            <image src="/static/category/back.png" class="w-[36rpx] h-[36rpx]" mode="aspectFit" />
+            <image src="/static/public/back.png" class="w-[36rpx] h-[36rpx]" mode="aspectFit" />
           </view>
           <!-- 居中标题：根据状态动态显示 -->
           <view class="text-[32rpx] font-bold text-gray-800 flex-1 text-center truncate px-[16rpx]">
@@ -247,6 +247,7 @@ onMounted(async () => {
 });
 
 const fetchMetaData = async () => {
+  uni.showLoading({ title: '加载中...', mask: true });
   try {
     const [catRes, tagRes] = await Promise.all([
       blogApi.getCategoriesList(),
@@ -256,6 +257,8 @@ const fetchMetaData = async () => {
     tags.value = tagRes || [];
   } catch (error) {
     uni.showToast({ title: '数据加载失败', icon: 'none' });
+  } finally {
+    uni.hideLoading();
   }
 };
 
