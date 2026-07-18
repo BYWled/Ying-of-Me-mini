@@ -3,7 +3,7 @@
     class="relative w-full min-h-screen overflow-hidden bg-[#e6f2f0] dark:bg-[#121212] transition-colors duration-700">
     <!-- 固定视差背景 -->
     <image class="fixed top-0 left-0 w-full h-full object-cover z-0 transition-opacity duration-700 ease-in-out"
-      :src="isDark ? 'https://www.wled.top/images/wallhaven-wqery6-dark.webp' : 'https://www.wled.top/images/wallhaven-wqery6-light.webp'"
+      :src="isDark ? 'https://blog.wled.top/images/wallhaven-wqery6-dark.webp' : 'https://blog.wled.top/images/wallhaven-wqery6-light.webp'"
       mode="aspectFill" />
 
     <!-- 自定义沉浸式导航栏 -->

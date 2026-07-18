@@ -240,8 +240,8 @@ const { isDark, toggleTheme } = useTheme();
 
 const heroBgUrl = computed(() => {
   return isDark.value
-    ? 'https://www.wled.top/images/wallhaven-wqery6-dark.webp'
-    : 'https://www.wled.top/images/wallhaven-wqery6-light.webp';
+    ? 'https://blog.wled.top/images/wallhaven-wqery6-dark.webp'
+    : 'https://blog.wled.top/images/wallhaven-wqery6-light.webp';
 });
 
 // 4. 博客核心数据流
@@ -267,11 +267,11 @@ const resolveMediaUrl = (path: string | null | undefined) => {
   if (path.startsWith('http://') || path.startsWith('https://')) {
     return path;
   }
-  return `https://www.wled.top${path.startsWith('/') ? '' : '/'}${path}`;
+  return `https://blog.wled.top${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
 const resolvedAvatar = computed(() => {
-  return resolveMediaUrl(siteInfo.value?.theme_config?.defaults?.avatar || '/images/Oz-Vessalius-avatar.svg');
+  return resolveMediaUrl(siteInfo.value?.theme_config?.defaults?.avatar || '/images/Wled-avatar.svg');
 });
 
 // 格式化日期格式

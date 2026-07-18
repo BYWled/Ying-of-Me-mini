@@ -14,11 +14,11 @@ export const BASE_URL = (() => {
   // #endif
 
   // #ifdef MP-WEIXIN
-  return "https://mirror.wled.top/api";
+  return "https://mirror-blog.wled.top/api";
   // #endif
 
   // 兜底默认值
-  return "https://mirror.wled.top/api";
+  return "https://mirror-blog.wled.top/api";
 })();
 
 /**
