@@ -5,7 +5,7 @@
     <!-- 1. 全屏静止背景 (解决背景填充不全问题，利用 fixed 保证滚动时完全拉伸遮罩) -->
     <view class="fixed inset-0 w-full h-full z-0 overflow-hidden pointer-events-none">
       <image class="w-full h-full object-cover transition-all duration-700"
-        :src="isDark ? 'https://www.wled.top/images/wallhaven-wqery6-dark.webp' : 'https://www.wled.top/images/wallhaven-wqery6-light.webp'"
+        :src="isDark ? 'https://blog.wled.top/images/wallhaven-wqery6-dark.webp' : 'https://blog.wled.top/images/wallhaven-wqery6-light.webp'"
         mode="aspectFill" />
       <view class="absolute inset-0 transition-all duration-500"
         :style="{ backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'transparent' }" />

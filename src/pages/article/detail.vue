@@ -91,7 +91,7 @@
                     class="rounded-[32rpx] p-[32rpx] pt-[12rpx] shadow-sm transition-colors duration-500 overflow-hidden box-border w-full border"
                     :style="{ backgroundColor: isDark ? '#1e1e1e' : 'rgba(255,255,255,0.95)', borderColor: isDark ? '#333333' : 'rgba(255,255,255,0.6)' }">
                     <mp-html ref="articleHtml" :key="isDark ? 'dark' : 'light'" :content="processedContent"
-                        :tag-style="isDark ? markdownStylesDark : markdownStyles" domain="https://www.wled.top"
+                        :tag-style="isDark ? markdownStylesDark : markdownStyles" domain="https://blog.wled.top"
                         :selectable="true" :lazy-load="true" :use-anchor="navBarHeight" @linktap="handleLinkTap"
                         @ready="handleHtmlReady" />
                 </view>
@@ -363,7 +363,7 @@ const processHexoContent = (html: string, isDark: boolean) => {
         if (realSrc) {
             // 如果是绝对域名，原样保留；如果是相对路径，强行绑定主域名
             if (realSrc.startsWith('/')) {
-                realSrc = 'https://www.wled.top' + realSrc;
+                realSrc = 'https://blog.wled.top' + realSrc;
             }
 
             // 覆盖替换原本可能有问题的 src 属性
@@ -391,7 +391,7 @@ const processHexoContent = (html: string, isDark: boolean) => {
             return _match
         }
         const encoded = encodeURIComponent(href)
-        return `<a ${before}href="https://www.wled.top/___ext___?url=${encoded}"${after}>`
+        return `<a ${before}href="https://blog.wled.top/___ext___?url=${encoded}"${after}>`
     })
 
     return res;
@@ -502,9 +502,9 @@ const handleHtmlReady = () => {
 const coverUrl = computed(() => {
     if (article.value?.cover) {
         const cv = article.value.cover
-        return cv.startsWith('http') ? cv : `https://www.wled.top${cv}`
+        return cv.startsWith('http') ? cv : `https://blog.wled.top${cv}`
     }
-    return 'https://www.wled.top/images/wallhaven-wqery6-light.webp'
+    return 'https://blog.wled.top/images/wallhaven-wqery6-light.webp'
 })
 
 const formatDate = (dateStr: string) => {
@@ -591,9 +591,9 @@ const handleLinkTap = (e: any) => {
     } else if (urlStr.startsWith('www.') || urlStr.startsWith('mirror.')) {
         urlStr = 'https://' + urlStr;
     } else if (urlStr.startsWith('/')) {
-        urlStr = 'https://www.wled.top' + urlStr;
+        urlStr = 'https://blog.wled.top' + urlStr;
     } else if (!urlStr.startsWith('http')) {
-        urlStr = 'https://www.wled.top/' + urlStr;
+        urlStr = 'https://blog.wled.top/' + urlStr;
     }
 
     // 3. 安全解析
@@ -604,12 +604,12 @@ const handleLinkTap = (e: any) => {
         // 如果依然失败，尝试作为相对路径进行降级处理
         console.error('URL解析失败，尝试降级:', urlStr);
         // 这里手动将无效的 urlStr 强制拆解，避免小程序 URL 构造器崩溃
-        const pathOnly = urlStr.replace('https://www.wled.top', '').replace('https://mirror.wled.top', '');
+        const pathOnly = urlStr.replace('https://blog.wled.top', '').replace('https://mirror.wled.top', '');
         handleInternalPath(pathOnly);
         return;
     }
 
-    const isInternal = urlObj.hostname === 'www.wled.top' || urlObj.hostname === 'mirror.wled.top';
+    const isInternal = urlObj.hostname === 'blog.wled.top' || urlObj.hostname === 'mirror.wled.top';
     if (!isInternal) {
         uni.setClipboardData({
             data: href,
